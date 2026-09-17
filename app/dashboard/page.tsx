@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type OrderItem = { nombre?: string; nombreProducto?: string; cantidad?: number; precio?: number };
 type Order = { id: number; items?: OrderItem[]; total?: number; estado?: string; fecha?: string };
@@ -40,6 +41,22 @@ function shortProductName(name: string) {
 }
 
 export default function DashboardPage() {
+    const router = useRouter();
+
+  useEffect(() => {
+    const usuarioGuardado = localStorage.getItem("usuario");
+
+    if (!usuarioGuardado) {
+      router.push("/login");
+      return;
+    }
+
+    const usuario = JSON.parse(usuarioGuardado);
+
+    if (usuario.rol !== "admin") {
+      router.push("/menu");
+    }
+  }, [router]);
   const [active, setActive] = useState("Resumen");
   const [range, setRange] = useState("Este mes");
   const [orders, setOrders] = useState<Order[]>([]);
