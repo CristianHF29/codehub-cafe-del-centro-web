@@ -54,7 +54,7 @@ export default function ClienteDashboard() {
                   <p className="text-[10px] text-gray-400 mt-0.5">{new Date(pedido.fecha).toLocaleString()}</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-lg font-bold text-amber-900">\${pedido.total.toFixed(2)}</span>
+                  <span className="text-lg font-bold text-amber-900">${pedido.total.toFixed(2)}</span>
                 </div>
               </div>
             ))}

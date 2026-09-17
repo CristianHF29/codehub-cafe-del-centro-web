@@ -33,7 +33,7 @@ export default function AdminPedidos() {
                   <td className="py-3 px-4 text-xs text-gray-600 max-w-xs truncate">
                     {pedido.items.map(i => `${i.cantidad}x ${i.nombre} (${i.tamano})`).join(", ")}
                   </td>
-                  <td className="py-3 px-4 font-semibold text-amber-900">\${pedido.total.toFixed(2)}</td>
+                  <td className="py-3 px-4 font-semibold text-amber-900">${pedido.total.toFixed(2)}</td>
                   <td className="py-3 px-4">
                     <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
                       pedido.estado === "pendiente" ? "bg-yellow-100 text-yellow-800" :

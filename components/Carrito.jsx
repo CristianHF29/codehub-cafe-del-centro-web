@@ -4,7 +4,7 @@ import { useApp } from "@/context/AppContext";
 
 export default function Carrito() {
   const { carrito, actualizarCantidad, eliminarDelCarrito, calcularTotalCarrito, finalizarPedido } = useApp();
-  const [usuarioId] = useState(1); // ID numérico del usuario
+  const [usuarioId] = useState(1);
   const [mensajeExito, setMensajeExito] = useState(false);
 
   const handleCheckout = () => {
@@ -39,21 +39,21 @@ export default function Carrito() {
                 <div>
                   <h4 className="font-semibold text-gray-800">{item.nombre}</h4>
                   <p className="text-xs text-amber-700 font-medium">Vaso: {item.tamano}</p>
-                  <p className="text-xs text-gray-500">\${item.precio.toFixed(2)} c/u</p>
+                  <p className="text-xs text-gray-500">${item.precio.toFixed(2)} c/u</p>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="flex items-center border rounded-lg bg-gray-50">
-                    <button 
+                    <button
                       onClick={() => actualizarCantidad(item.id, item.tamano, -1)}
                       className="px-2 py-1 text-gray-600 hover:bg-gray-200 rounded-l"
                     >-</button>
                     <span className="px-2 text-sm font-medium">{item.cantidad}</span>
-                    <button 
+                    <button
                       onClick={() => actualizarCantidad(item.id, item.tamano, 1)}
                       className="px-2 py-1 text-gray-600 hover:bg-gray-200 rounded-r"
                     >+</button>
                   </div>
-                  <button 
+                  <button
                     onClick={() => eliminarDelCarrito(item.id, item.tamano)}
                     className="text-red-500 hover:text-red-700 text-sm p-1"
                     title="Eliminar"
@@ -67,7 +67,7 @@ export default function Carrito() {
 
           <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
             <span className="font-bold text-gray-700">Total a pagar:</span>
-            <span className="text-xl font-extrabold text-amber-900">\${calcularTotalCarrito()}</span>
+            <span className="text-xl font-extrabold text-amber-900">${calcularTotalCarrito()}</span>
           </div>
 
           <button
