@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { login } from "@/services/authService";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,6 +12,19 @@ export default function LoginPage() {
   const [mensaje, setMensaje] = useState("");
   const [cargando, setCargando] = useState(false);
 
+  // Si ya hay sesion activa, no tiene sentido mostrar el login
+  useEffect(() => {
+    const guardado = localStorage.getItem("usuario");
+    if (guardado) {
+      try {
+        const datos = JSON.parse(guardado);
+        router.push(datos.rol === "admin" ? "/dashboard" : "/menu");
+      } catch {
+        localStorage.removeItem("usuario");
+      }
+    }
+  }, [router]);
+
   const iniciarSesion = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -18,35 +32,18 @@ export default function LoginPage() {
     setCargando(true);
 
     try {
-      const respuesta = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
+      const datos = await login(email, password);
 
-      const datos = await respuesta.json();
-
-      if (!respuesta.ok) {
-        setMensaje(datos.mensaje || "Error al iniciar sesión");
-        return;
-      }
-
-      // Guardar el usuario que inició sesión
       localStorage.setItem("usuario", JSON.stringify(datos));
 
-      // Redirigir según el rol
       if (datos.rol === "admin") {
         router.push("/dashboard");
       } else {
         router.push("/menu");
       }
-    } catch (error) {
-      setMensaje("No se pudo conectar con el servidor");
+    } catch (error: unknown) {
+      const texto = error instanceof Error ? error.message : "Error al iniciar sesión";
+      setMensaje(texto);
     } finally {
       setCargando(false);
     }
@@ -73,23 +70,11 @@ export default function LoginPage() {
           boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
         }}
       >
-        <h1
-          style={{
-            textAlign: "center",
-            marginBottom: "8px",
-            color: "var(--brown-dark)",
-          }}
-        >
+        <h1 style={{ textAlign: "center", marginBottom: "8px", color: "var(--brown-dark)" }}>
           Café del Centro
         </h1>
 
-        <p
-          style={{
-            textAlign: "center",
-            marginBottom: "28px",
-            color: "var(--muted)",
-          }}
-        >
+        <p style={{ textAlign: "center", marginBottom: "28px", color: "var(--muted)" }}>
           Iniciar sesión
         </p>
 
@@ -119,7 +104,7 @@ export default function LoginPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
+            placeholder="********"
             required
             style={{
               width: "100%",
@@ -133,13 +118,7 @@ export default function LoginPage() {
           />
 
           {mensaje && (
-            <p
-              style={{
-                color: "#a33",
-                marginBottom: "16px",
-                textAlign: "center",
-              }}
-            >
+            <p style={{ color: "#a33", marginBottom: "16px", textAlign: "center" }}>
               {mensaje}
             </p>
           )}
@@ -154,21 +133,16 @@ export default function LoginPage() {
               borderRadius: "8px",
               background: "var(--brown)",
               color: "white",
-              cursor: "pointer",
+              cursor: cargando ? "not-allowed" : "pointer",
               fontSize: "16px",
+              opacity: cargando ? 0.7 : 1,
             }}
           >
             {cargando ? "Ingresando..." : "Iniciar sesión"}
           </button>
         </form>
 
-        <p
-          style={{
-            textAlign: "center",
-            marginTop: "22px",
-            color: "var(--muted)",
-          }}
-        >
+        <p style={{ textAlign: "center", marginTop: "22px", color: "var(--muted)" }}>
           ¿No tienes una cuenta?
         </p>
 
@@ -186,6 +160,23 @@ export default function LoginPage() {
           }}
         >
           Crear cuenta
+        </button>
+
+        <button
+          type="button"
+          onClick={() => router.push("/")}
+          style={{
+            width: "100%",
+            marginTop: "10px",
+            padding: "11px",
+            border: "none",
+            background: "transparent",
+            color: "var(--muted)",
+            cursor: "pointer",
+            fontSize: "13px",
+          }}
+        >
+          Volver al inicio
         </button>
       </div>
     </main>

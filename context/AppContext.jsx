@@ -4,31 +4,66 @@ import { obtenerProductos } from "@/services/productosService";
 import {
   crearPedido as apiCrearPedido,
   cambiarEstadoPedido as apiCambiarEstado,
+  obtenerPedidos,
   obtenerPedidosDeUsuario
 } from "@/services/pedidosService";
 
 const AppContext = createContext();
 
-const USUARIO_ID = 1;
-
 export const AppProvider = ({ children }) => {
+  const [usuario, setUsuario] = useState(null);
+  const [cargandoSesion, setCargandoSesion] = useState(true);
   const [productos, setProductos] = useState([]);
   const [carrito, setCarrito] = useState([]);
   const [puntosUsuario, setPuntosUsuario] = useState(0);
   const [pedidos, setPedidos] = useState([]);
 
-  // Cargar productos y pedidos al iniciar
+  // Recuperar la sesion guardada al iniciar
+  useEffect(() => {
+    try {
+      const guardado = localStorage.getItem("usuario");
+      if (guardado) {
+        const datos = JSON.parse(guardado);
+        setUsuario(datos);
+        setPuntosUsuario(datos.puntos ?? 0);
+      }
+    } catch {
+      localStorage.removeItem("usuario");
+    }
+    setCargandoSesion(false);
+  }, []);
+
+  // Cargar productos
   useEffect(() => {
     obtenerProductos()
       .then(data => setProductos(data))
       .catch(err => console.error("Error al cargar productos:", err));
-
-    obtenerPedidosDeUsuario(USUARIO_ID)
-      .then(data => setPedidos(data))
-      .catch(err => console.error("Error al cargar pedidos:", err));
   }, []);
 
-  // --- ACCIONES DEL CARRITO ---
+  // Cargar pedidos segun el rol del usuario
+  useEffect(() => {
+    if (!usuario) {
+      setPedidos([]);
+      return;
+    }
+    const consulta = usuario.rol === "admin"
+      ? obtenerPedidos()
+      : obtenerPedidosDeUsuario(usuario.id);
+
+    consulta
+      .then(data => setPedidos(data))
+      .catch(err => console.error("Error al cargar pedidos:", err));
+  }, [usuario]);
+
+  const cerrarSesion = () => {
+    localStorage.removeItem("usuario");
+    setUsuario(null);
+    setCarrito([]);
+    setPedidos([]);
+    setPuntosUsuario(0);
+  };
+
+  // --- CARRITO ---
   const agregarAlCarrito = (producto, tamano) => {
     const precioFinal = producto.precios[tamano];
 
@@ -70,12 +105,12 @@ export const AppProvider = ({ children }) => {
     return carrito.reduce((acc, item) => acc + (item.precio * item.cantidad), 0).toFixed(2);
   };
 
-  // --- ACCIONES DE PEDIDOS ---
-  const finalizarPedido = async (usuarioId = USUARIO_ID) => {
-    if (carrito.length === 0) return;
+  // --- PEDIDOS ---
+  const finalizarPedido = async () => {
+    if (carrito.length === 0 || !usuario) return;
 
     const nuevoPedidoData = {
-      usuarioId: usuarioId,
+      usuarioId: usuario.id,
       items: [...carrito],
       total: Number(calcularTotalCarrito())
     };
@@ -85,6 +120,11 @@ export const AppProvider = ({ children }) => {
       setPedidos(prev => [respuesta.pedido, ...prev]);
       setPuntosUsuario(respuesta.puntosTotales);
       setCarrito([]);
+
+      // Mantener los puntos sincronizados en la sesion guardada
+      const actualizado = { ...usuario, puntos: respuesta.puntosTotales };
+      setUsuario(actualizado);
+      localStorage.setItem("usuario", JSON.stringify(actualizado));
     } catch (error) {
       console.error("Error al crear el pedido en la API:", error);
     }
@@ -101,6 +141,10 @@ export const AppProvider = ({ children }) => {
 
   return (
     <AppContext.Provider value={{
+      usuario,
+      cargandoSesion,
+      esAdmin: usuario?.rol === "admin",
+      cerrarSesion,
       productos,
       carrito,
       agregarAlCarrito,

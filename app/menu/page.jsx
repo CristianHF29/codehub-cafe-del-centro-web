@@ -1,54 +1,78 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AppProvider, useApp } from "@/context/AppContext";
 import Carrito from "@/components/Carrito";
 import ClienteDashboard from "@/components/ClienteDashboard";
 import AdminPedidos from "@/components/AdminPedidos";
 
 function DashboardContent() {
-  const { productos, agregarAlCarrito } = useApp();
+  const router = useRouter();
+  const { productos, agregarAlCarrito, usuario, cargandoSesion, esAdmin, cerrarSesion } = useApp();
   const [tamanosSeleccionados, setTamanosSeleccionados] = useState({});
-  const [vistaAdmin, setVistaAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!cargandoSesion && !usuario) {
+      router.push("/login");
+    }
+  }, [cargandoSesion, usuario, router]);
 
   const handleTamanoChange = (productoId, tamano) => {
     setTamanosSeleccionados(prev => ({ ...prev, [productoId]: tamano }));
   };
 
+  const handleCerrarSesion = () => {
+    cerrarSesion();
+    router.push("/login");
+  };
+
+  if (cargandoSesion || !usuario) {
+    return (
+      <main className="min-h-screen bg-amber-50/40 flex items-center justify-center">
+        <p className="text-amber-900 font-medium">Cargando...</p>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-amber-50/40 p-6 md:p-10">
       <div className="max-w-7xl mx-auto space-y-8">
 
-        {/* Cabecera */}
         <header className="flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-amber-100 gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-black text-amber-900">☕ Café del Centro</h1>
-            <p className="text-sm text-gray-500">Módulo Web - Carrito, Pedidos y Puntos de Fidelidad</p>
+            <h1 className="text-2xl md:text-3xl font-black text-amber-900">Café del Centro</h1>
+            <p className="text-sm text-gray-500">
+              {esAdmin ? "Panel de administración de pedidos" : "Menú, carrito y puntos de fidelidad"}
+            </p>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-sm font-semibold text-gray-800">{usuario.nombre}</p>
+              <p className="text-xs text-amber-700 capitalize">{usuario.rol}</p>
+            </div>
+            {esAdmin && (
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
+              >
+                Reportes
+              </button>
+            )}
             <button
-              onClick={() => setVistaAdmin(false)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${!vistaAdmin ? 'bg-amber-800 text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              onClick={handleCerrarSesion}
+              className="px-4 py-2 rounded-xl text-sm font-medium bg-amber-800 text-white hover:bg-amber-900 transition-all"
             >
-              Vista Cliente
-            </button>
-            <button
-              onClick={() => setVistaAdmin(true)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${vistaAdmin ? 'bg-amber-800 text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-            >
-              Vista Administrador
+              Cerrar sesión
             </button>
           </div>
         </header>
 
-        {/* Contenido Dinámico según Rol */}
-        {!vistaAdmin ? (
+        {!esAdmin ? (
           <div className="space-y-8">
-            {/* Sección de Menú y Carrito */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-              {/* Menú de Productos */}
               <div className="lg:col-span-2 space-y-4">
-                <h2 className="text-xl font-bold text-amber-900">📜 Menú de Bebidas</h2>
+                <h2 className="text-xl font-bold text-amber-900">Menú de Bebidas</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {productos.map((producto) => {
                     const tamanoActual = tamanosSeleccionados[producto.id] || "16oz";
@@ -60,7 +84,6 @@ function DashboardContent() {
                           <h3 className="font-bold text-gray-800 text-lg">{producto.nombre}</h3>
                           <p className="text-xs text-gray-500 mt-1">Precio base (16oz): ${producto.precios["16oz"].toFixed(2)}</p>
 
-                          {/* Selector de Tamaño de Vaso */}
                           <div className="mt-3">
                             <label className="text-xs font-semibold text-gray-600 block mb-1">Elige tamaño de vaso:</label>
                             <div className="grid grid-cols-4 gap-1.5">
@@ -95,18 +118,15 @@ function DashboardContent() {
                 </div>
               </div>
 
-              {/* Componente Carrito */}
               <div>
                 <Carrito />
               </div>
 
             </div>
 
-            {/* Dashboard del Cliente */}
             <ClienteDashboard />
           </div>
         ) : (
-          /* Panel de Administrador */
           <AdminPedidos />
         )}
 

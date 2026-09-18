@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { obtenerProductos } from "@/services/productosService";
 
 type Product = {
   id: number;
@@ -11,12 +13,7 @@ type Product = {
   precios?: Record<string, number>;
 };
 
-const fallbackProducts: Product[] = [
-  { id: 1, nombre: "Espresso", descripcion: "Doble shot corto extraído con precisión milimétrica.", categoria: "clásicos", disponible: true, precios: { "16oz": 2.5 } },
-  { id: 2, nombre: "Americano", descripcion: "Espresso doble con agua caliente filtrada.", categoria: "clásicos", disponible: true, precios: { "16oz": 2.75 } },
-  { id: 3, nombre: "Cappuccino", descripcion: "Espresso clásico, leche sedosa y espuma densa.", categoria: "clásicos", disponible: true, precios: { "16oz": 3.5 } },
-  { id: 4, nombre: "Latte de la casa", descripcion: "Textura sedosa de leche coronando nuestro espresso.", categoria: "clásicos", disponible: true, precios: { "16oz": 3.75 } },
-];
+type Usuario = { id: number; nombre: string; rol: string };
 
 function CoffeeIcon() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 8h12v7a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V8Z" /><path d="M17 10h2a3 3 0 0 1 0 6h-2M8 4c0 1 .7 1.3.7 2.2M12 3c0 1 .7 1.3.7 2.2" /></svg>;
@@ -32,31 +29,62 @@ function formatPrice(product: Product) {
 }
 
 export default function CustomerHome() {
-  const [products, setProducts] = useState(fallbackProducts);
-  const [cartCount, setCartCount] = useState(0);
-  const [notice, setNotice] = useState("");
+  const router = useRouter();
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
+  const [usuario, setUsuario] = useState<Usuario | null>(null);
 
   useEffect(() => {
-    fetch("/api/productos")
-      .then((response) => response.ok ? response.json() : Promise.reject(new Error("No se pudo cargar el menú")))
-      .then((data: Product[]) => {
-        if (Array.isArray(data) && data.length > 0) setProducts(data.filter((product) => product.disponible).slice(0, 4));
-      })
-      .catch(() => undefined);
+    try {
+      const guardado = localStorage.getItem("usuario");
+      if (guardado) setUsuario(JSON.parse(guardado));
+    } catch {
+      localStorage.removeItem("usuario");
+    }
   }, []);
 
-  function addToCart(productName: string) {
-    setCartCount((count) => count + 1);
-    setNotice(`${productName} se agregó a tu pedido`);
-    window.setTimeout(() => setNotice(""), 2600);
+  useEffect(() => {
+    obtenerProductos()
+      .then((data: Product[]) => {
+        setProducts(Array.isArray(data) ? data.filter((product) => product.disponible) : []);
+      })
+      .catch((e: Error) => setError(e.message || "No se pudo cargar el menú"))
+      .finally(() => setCargando(false));
+  }, []);
+
+  const destacados = products.slice(0, 4);
+
+  function cerrarSesion() {
+    localStorage.removeItem("usuario");
+    setUsuario(null);
+  }
+
+  function irAMiZona() {
+    router.push(usuario?.rol === "admin" ? "/dashboard" : "/menu");
   }
 
   return (
     <main className="storefront">
       <header className="store-header">
         <a className="store-brand" href="#inicio"><span className="brand-cup"><CoffeeIcon /></span><span><strong>Café del Centro</strong><small>Especialidad, calidez y buenos momentos</small></span></a>
-        <nav className="store-nav" aria-label="Navegación de la cafetería"><a href="/menu">Menú</a><a href="#historia">Nuestra historia</a><a href="#contacto">Contacto</a></nav>
-        <div className="store-actions"><a className="dashboard-link" href="/dashboard">Panel admin</a><button className="cart-button" aria-label={`Pedido, ${cartCount} productos`} onClick={() => setNotice(cartCount ? `Tienes ${cartCount} producto${cartCount === 1 ? "" : "s"} en tu pedido` : "Tu pedido está vacío")}>Pedido <span>{cartCount}</span></button></div>
+        <nav className="store-nav" aria-label="Navegación de la cafetería"><a href="#menu">Menú</a><a href="#historia">Nuestra historia</a><a href="#contacto">Contacto</a></nav>
+        <div className="store-actions">
+          {usuario ? (
+            <>
+              <button className="cart-button" onClick={irAMiZona}>
+                {usuario.rol === "admin" ? "Panel admin" : "Mi cuenta"}
+              </button>
+              <button className="cart-button" onClick={cerrarSesion}>Cerrar sesión</button>
+            </>
+          ) : (
+            <>
+              <a className="dashboard-link" href="/registro">Crear cuenta</a>
+              <button className="cart-button" onClick={() => router.push("/login")}>Iniciar sesión</button>
+            </>
+          )}
+        </div>
       </header>
 
       <section className="hero" id="inicio">
@@ -65,14 +93,42 @@ export default function CustomerHome() {
         <div className="hero-foot"><span>San Salvador · Centro Histórico</span><span className="scroll-hint"><i /> Desliza para descubrir</span><span>Lun — Sáb · 7:00 AM — 6:00 PM</span></div>
       </section>
 
-      <section className="menu-section" id="menu"><div className="section-intro"><div><span className="section-kicker">PARA CADA MOMENTO</span><h2>Elige tu<br /><em>favorito.</em></h2></div><p>Desde un espresso intenso hasta un latte suave. Preparamos cada taza respetando el origen y el momento.</p></div><div className="menu-grid">{products.map((product, index) => <article className={`menu-card card-${index + 1}`} key={product.id}><div className="card-number">0{index + 1}</div><div className="card-icon"><CoffeeIcon /></div><span className="product-category">{product.categoria}</span><h3>{product.nombre}</h3><p>{product.descripcion}</p><div className="card-bottom"><strong>{formatPrice(product)}</strong><a className="card-link" href="/menu" aria-label={`Pedir ${product.nombre}`}><ArrowIcon /></a></div></article>)}</div><a className="outline-button" href="/menu">Ver todos los productos <ArrowIcon /></a></section>
+      <section className="menu-section" id="menu">
+        <div className="section-intro">
+          <div><span className="section-kicker">PARA CADA MOMENTO</span><h2>Elige tu<br /><em>favorito.</em></h2></div>
+          <p>Desde un espresso intenso hasta un latte suave. Preparamos cada taza respetando el origen y el momento.</p>
+        </div>
+
+        {cargando && <p style={{ color: "var(--muted)", padding: "24px 0" }}>Cargando el menú...</p>}
+        {error && <p style={{ color: "#a33", padding: "24px 0" }}>{error}</p>}
+        {!cargando && !error && destacados.length === 0 && (
+          <p style={{ color: "var(--muted)", padding: "24px 0" }}>No hay productos disponibles en este momento.</p>
+        )}
+
+        <div className="menu-grid">
+          {destacados.map((product, index) => (
+            <article className={`menu-card card-${index + 1}`} key={product.id}>
+              <div className="card-number">0{index + 1}</div>
+              <div className="card-icon"><CoffeeIcon /></div>
+              <span className="product-category">{product.categoria}</span>
+              <h3>{product.nombre}</h3>
+              <p>{product.descripcion}</p>
+              <div className="card-bottom">
+                <strong>{formatPrice(product)}</strong>
+                <a href="/menu" aria-label={`Pedir ${product.nombre}`}><ArrowIcon /></a>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <a className="outline-button" href="/menu">Ver todos los productos <ArrowIcon /></a>
+      </section>
 
       <section className="story-section" id="historia"><div className="story-visual"><div className="story-stamp">CD<br /><small>2018</small></div><span>ORIGEN · OFICIO · ENCUENTRO</span></div><div className="story-copy"><span className="section-kicker">NUESTRA FILOSOFÍA</span><h2>El café sabe mejor<br /><em>cuando se comparte.</em></h2><p>Creemos que una cafetería es mucho más que una barra. Es ese punto de encuentro donde las ideas se vuelven conversaciones y el tiempo se disfruta de otra forma.</p><a className="quiet-link" href="#contacto">Ven a conocernos <ArrowIcon /></a></div></section>
 
-      <section className="contact-section" id="contacto"><div><span className="section-kicker">ATENCIÓN & RESERVAS</span><h2>Conectemos sobre<br /><em>un buen café.</em></h2><p>¿Tienes una ocasión especial o quieres reservar un espacio? Escríbenos, nos encantará recibirte.</p></div><a className="primary-button" href="mailto:hola@cafedelcentro.com">Enviar un mensaje <ArrowIcon /></a></section>
+      <section className="contact-section" id="contacto"><div><span className="section-kicker">ATENCIÓN &amp; RESERVAS</span><h2>Conectemos sobre<br /><em>un buen café.</em></h2><p>¿Tienes una ocasión especial o quieres reservar un espacio? Escríbenos, nos encantará recibirte.</p></div><a className="primary-button" href="mailto:hola@cafedelcentro.com">Enviar un mensaje <ArrowIcon /></a></section>
 
-      <footer className="store-footer"><a className="store-brand" href="#inicio"><span className="brand-cup"><CoffeeIcon /></span><span><strong>Café del Centro</strong><small>Especialidad, calidez y buenos momentos</small></span></a><span>© 2026 Café del Centro</span><div><a href="/menu">Menú</a><a href="#contacto">Contacto</a><a href="/dashboard">Dashboard</a></div></footer>
-      {notice && <div className="store-toast">✓ {notice}</div>}
+      <footer className="store-footer"><a className="store-brand" href="#inicio"><span className="brand-cup"><CoffeeIcon /></span><span><strong>Café del Centro</strong><small>Especialidad, calidez y buenos momentos</small></span></a><span>© 2026 Café del Centro</span><div><a href="/menu">Menú</a><a href="#contacto">Contacto</a><a href="/login">Iniciar sesión</a></div></footer>
     </main>
   );
 }

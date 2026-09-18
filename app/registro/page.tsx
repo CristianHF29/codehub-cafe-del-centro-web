@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { registrar } from "@/services/authService";
 
 export default function RegistroPage() {
   const router = useRouter();
@@ -12,39 +13,44 @@ export default function RegistroPage() {
   const [mensaje, setMensaje] = useState("");
   const [cargando, setCargando] = useState(false);
 
+  useEffect(() => {
+    const guardado = localStorage.getItem("usuario");
+    if (guardado) {
+      try {
+        const datos = JSON.parse(guardado);
+        router.push(datos.rol === "admin" ? "/dashboard" : "/menu");
+      } catch {
+        localStorage.removeItem("usuario");
+      }
+    }
+  }, [router]);
+
   const registrarUsuario = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setMensaje("");
+
+    if (nombre.trim().length < 3) {
+      setMensaje("El nombre debe tener al menos 3 caracteres");
+      return;
+    }
+
+    if (password.length < 6) {
+      setMensaje("La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+
     setCargando(true);
 
     try {
-      const respuesta = await fetch("/api/auth/registro", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nombre,
-          email,
-          password,
-        }),
-      });
+      const datos = await registrar(nombre.trim(), email.trim(), password);
 
-      const datos = await respuesta.json();
-
-      if (!respuesta.ok) {
-        setMensaje(datos.mensaje || "Error al registrar la cuenta");
-        return;
-      }
-
-      // Guardar el usuario registrado
       localStorage.setItem("usuario", JSON.stringify(datos));
 
-      // Ir al menú después del registro
       router.push("/menu");
-    } catch (error) {
-      setMensaje("No se pudo conectar con el servidor");
+    } catch (error: unknown) {
+      const texto = error instanceof Error ? error.message : "Error al registrar la cuenta";
+      setMensaje(texto);
     } finally {
       setCargando(false);
     }
@@ -71,23 +77,11 @@ export default function RegistroPage() {
           boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
         }}
       >
-        <h1
-          style={{
-            textAlign: "center",
-            marginBottom: "8px",
-            color: "var(--brown-dark)",
-          }}
-        >
+        <h1 style={{ textAlign: "center", marginBottom: "8px", color: "var(--brown-dark)" }}>
           Café del Centro
         </h1>
 
-        <p
-          style={{
-            textAlign: "center",
-            marginBottom: "28px",
-            color: "var(--muted)",
-          }}
-        >
+        <p style={{ textAlign: "center", marginBottom: "28px", color: "var(--muted)" }}>
           Crear una cuenta
         </p>
 
@@ -100,6 +94,7 @@ export default function RegistroPage() {
             onChange={(e) => setNombre(e.target.value)}
             placeholder="Tu nombre"
             required
+            minLength={3}
             style={{
               width: "100%",
               padding: "12px",
@@ -151,13 +146,7 @@ export default function RegistroPage() {
           />
 
           {mensaje && (
-            <p
-              style={{
-                color: "#a33",
-                marginBottom: "16px",
-                textAlign: "center",
-              }}
-            >
+            <p style={{ color: "#a33", marginBottom: "16px", textAlign: "center" }}>
               {mensaje}
             </p>
           )}
@@ -172,21 +161,16 @@ export default function RegistroPage() {
               borderRadius: "8px",
               background: "var(--brown)",
               color: "white",
-              cursor: "pointer",
+              cursor: cargando ? "not-allowed" : "pointer",
               fontSize: "16px",
+              opacity: cargando ? 0.7 : 1,
             }}
           >
             {cargando ? "Registrando..." : "Crear cuenta"}
           </button>
         </form>
 
-        <p
-          style={{
-            textAlign: "center",
-            marginTop: "22px",
-            color: "var(--muted)",
-          }}
-        >
+        <p style={{ textAlign: "center", marginTop: "22px", color: "var(--muted)" }}>
           ¿Ya tienes una cuenta?
         </p>
 
@@ -204,6 +188,23 @@ export default function RegistroPage() {
           }}
         >
           Iniciar sesión
+        </button>
+
+        <button
+          type="button"
+          onClick={() => router.push("/")}
+          style={{
+            width: "100%",
+            marginTop: "10px",
+            padding: "11px",
+            border: "none",
+            background: "transparent",
+            color: "var(--muted)",
+            cursor: "pointer",
+            fontSize: "13px",
+          }}
+        >
+          Volver al inicio
         </button>
       </div>
     </main>

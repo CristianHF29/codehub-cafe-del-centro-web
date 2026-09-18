@@ -4,12 +4,11 @@ import { useApp } from "@/context/AppContext";
 
 export default function Carrito() {
   const { carrito, actualizarCantidad, eliminarDelCarrito, calcularTotalCarrito, finalizarPedido } = useApp();
-  const [usuarioId] = useState(1);
   const [mensajeExito, setMensajeExito] = useState(false);
 
   const handleCheckout = () => {
     if (carrito.length === 0) return;
-    finalizarPedido(usuarioId);
+    finalizarPedido();
     setMensajeExito(true);
     setTimeout(() => setMensajeExito(false), 4000);
   };
