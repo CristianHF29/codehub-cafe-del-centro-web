@@ -1,6 +1,11 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { obtenerProductos } from "@/services/productosService";
+import {
+  obtenerProductos,
+  crearProducto as apiCrearProducto,
+  actualizarProducto as apiActualizarProducto,
+  eliminarProducto as apiEliminarProducto
+} from "@/services/productosService";
 import {
   crearPedido as apiCrearPedido,
   cambiarEstadoPedido as apiCambiarEstado,
@@ -34,10 +39,14 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   // Cargar productos
-  useEffect(() => {
-    obtenerProductos()
+  const recargarProductos = () => {
+    return obtenerProductos()
       .then(data => setProductos(data))
       .catch(err => console.error("Error al cargar productos:", err));
+  };
+
+  useEffect(() => {
+    recargarProductos();
   }, []);
 
   // Cargar pedidos segun el rol del usuario
@@ -139,6 +148,24 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // --- PRODUCTOS (CRUD ADMIN) ---
+  const crearProductoAdmin = async (producto) => {
+    const nuevo = await apiCrearProducto(producto);
+    setProductos(prev => [...prev, nuevo]);
+    return nuevo;
+  };
+
+  const actualizarProductoAdmin = async (id, cambios) => {
+    const actualizado = await apiActualizarProducto(id, cambios);
+    setProductos(prev => prev.map(p => (p.id === id ? actualizado : p)));
+    return actualizado;
+  };
+
+  const eliminarProductoAdmin = async (id) => {
+    await apiEliminarProducto(id);
+    setProductos(prev => prev.filter(p => p.id !== id));
+  };
+
   return (
     <AppContext.Provider value={{
       usuario,
@@ -151,6 +178,10 @@ export const AppProvider = ({ children }) => {
       actualizarCantidad,
       eliminarDelCarrito,
       calcularTotalCarrito,
+      recargarProductos,
+      crearProductoAdmin,
+      actualizarProductoAdmin,
+      eliminarProductoAdmin,
       pedidos,
       finalizarPedido,
       cambiarEstadoPedido,
