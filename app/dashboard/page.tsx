@@ -14,14 +14,14 @@ function CoffeeIcon() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 8h12v7a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V8Z" /><path d="M17 10h2a3 3 0 0 1 0 6h-2M8 4c0 1 .7 1.3.7 2.2M12 3c0 1 .7 1.3.7 2.2" /></svg>;
 }
 
-function DashboardIcon({ type }: { type: "overview" | "orders" | "products" | "customers" | "chart" | "settings" }) {
+function DashboardIcon({ type }: { type: "overview" | "orders" | "products" | "customers" | "chart" | "logout" }) {
   const content = {
     overview: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></>,
     orders: <><path d="M5 8h14l1 13H4L5 8Z" /><path d="M9 9V6a3 3 0 0 1 6 0v3" /></>,
     products: <><path d="M5 8h12v7a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V8Z" /><path d="M17 10h2a3 3 0 0 1 0 6h-2" /></>,
     customers: <><path d="M16 20v-1.5a4.5 4.5 0 0 0-4.5-4.5h-3A4.5 4.5 0 0 0 4 18.5V20" /><circle cx="10" cy="7" r="3.5" /><path d="M16 5a3.5 3.5 0 0 1 0 6.4M19.5 20v-1.4a4.5 4.5 0 0 0-3-4.2" /></>,
     chart: <><path d="M4 19V5M4 19h17" /><path d="m7 15 4-4 3 2 5-6" /></>,
-    settings: <><circle cx="12" cy="12" r="3" /><path d="M12 5v2M12 17v2M5 12h2M17 12h2" /></>,
+    logout: <><path d="M15 17v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v2" /><path d="M20 12H10M17 9l3 3-3 3" /></>,
   }[type];
 
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{content}</svg>;
@@ -43,7 +43,6 @@ export default function DashboardPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     const usuarioGuardado = localStorage.getItem("usuario");
@@ -130,11 +129,6 @@ export default function DashboardPage() {
     year: "numeric",
   }).toUpperCase();
 
-  function showNotice(message: string) {
-    setNotice(message);
-    window.setTimeout(() => setNotice(""), 2600);
-  }
-
   function cerrarSesion() {
     localStorage.removeItem("usuario");
     router.push("/login");
@@ -151,13 +145,11 @@ export default function DashboardPage() {
         <div className="dashboard-menu-label">MENÚ PRINCIPAL</div>
         <nav className="dashboard-nav" aria-label="Navegación del panel">
           <button className={active === "Resumen" ? "active" : ""} onClick={() => setActive("Resumen")}><DashboardIcon type="overview" /><span>Resumen</span></button>
-          <button onClick={() => router.push("/menu")}><DashboardIcon type="orders" /><span>Pedidos</span>{pendientes > 0 && <b>{pendientes}</b>}</button>
-          <button onClick={() => showNotice("Catálogo: módulo en desarrollo")}><DashboardIcon type="products" /><span>Productos</span></button>
+          <button onClick={() => router.push("/menu?vista=pedidos")}><DashboardIcon type="orders" /><span>Pedidos</span>{pendientes > 0 && <b>{pendientes}</b>}</button>
+          <button onClick={() => router.push("/menu?vista=productos")}><DashboardIcon type="products" /><span>Productos</span></button>
         </nav>
-        <div className="dashboard-menu-label dashboard-report-label">REPORTES</div>
-        <button className={`dashboard-nav-single ${active === "Analítica" ? "active" : ""}`} onClick={() => setActive("Analítica")}><DashboardIcon type="chart" /><span>Analítica</span></button>
         <div className="dashboard-sidebar-bottom">
-          <button className="dashboard-nav-single" onClick={cerrarSesion}><DashboardIcon type="settings" /><span>Cerrar sesión</span></button>
+          <button className="dashboard-nav-single" onClick={cerrarSesion}><DashboardIcon type="logout" /><span>Cerrar sesión</span></button>
           <div className="dashboard-user"><span>{iniciales}</span><div><strong>{usuario.nombre}</strong><small>Administrador</small></div></div>
         </div>
       </aside>
@@ -178,6 +170,10 @@ export default function DashboardPage() {
               <h1>Resumen de ventas</h1>
               <p>Esto es lo que está pasando en tu cafetería.</p>
             </div>
+            <div className="dashboard-heading-actions">
+              <button className="dashboard-period" onClick={() => router.push("/menu?vista=pedidos")}>Gestionar pedidos</button>
+              <button className="dashboard-export" onClick={() => router.push("/menu?vista=productos")}>Gestionar catálogo</button>
+            </div>
           </div>
 
           {error && <p style={{ color: "#a33", marginBottom: "16px" }}>{error}</p>}
@@ -185,18 +181,18 @@ export default function DashboardPage() {
           <div className="dashboard-metrics">
             <article><span className="metric-badge metric-brown"><DashboardIcon type="chart" /></span><div><small>VENTAS TOTALES</small><strong>{money(totalSales)}</strong></div></article>
             <article><span className="metric-badge metric-peach"><DashboardIcon type="orders" /></span><div><small>PEDIDOS</small><strong>{totalOrders}</strong></div></article>
-            <article><span className="metric-badge metric-sage"><DashboardIcon type="products" /></span><div><small>PROMEDIO POR PEDIDO</small><strong>{money(averageTicket)}</strong></div></article>
+            <article><span className="metric-badge metric-sage"><DashboardIcon type="products" /></span><div><small>TICKET PROMEDIO</small><strong>{money(averageTicket)}</strong></div></article>
             <article><span className="metric-badge metric-sand"><DashboardIcon type="customers" /></span><div><small>CLIENTES CON PEDIDOS</small><strong>{clientesUnicos}</strong></div></article>
           </div>
 
           <div className="dashboard-panels">
             <section className="dashboard-panel dashboard-ranking">
               <div className="dashboard-panel-heading">
-                <div><h2>Productos más vendidos</h2><p>Unidades vendidas segun los pedidos registrados</p></div>
+                <div><h2>Productos más vendidos</h2><p>Unidades vendidas según los pedidos registrados</p></div>
               </div>
               <div className="ranking-legend"><span><i className="legend-brown" /> Unidades vendidas</span></div>
               {ranking.length === 0 ? (
-                <p style={{ padding: "24px 0", color: "var(--muted)" }}>Aún no hay pedidos para calcular el ranking.</p>
+                <p style={{ padding: "24px 0", color: "#a1978c" }}>Aún no hay pedidos para calcular el ranking.</p>
               ) : (
                 <>
                   <div className="ranking-chart">
@@ -213,6 +209,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="ranking-foot">
                     <span>El producto líder representa el <strong>{porcentajeLider}%</strong> de tus unidades vendidas</span>
+                    <button onClick={() => router.push("/menu?vista=productos")}>Ver catálogo <span>→</span></button>
                   </div>
                 </>
               )}
@@ -229,6 +226,7 @@ export default function DashboardPage() {
               </div>
               <div className="ranking-foot">
                 <span>Ingresos acumulados: <strong>{money(totalSales)}</strong></span>
+                <button onClick={() => router.push("/menu?vista=pedidos")}>Ver pedidos <span>→</span></button>
               </div>
             </section>
 
@@ -260,6 +258,7 @@ export default function DashboardPage() {
                   <>
                     <h2>Tu {lider.name} es el más pedido</h2>
                     <p>Representa el <strong>{porcentajeLider}%</strong> de las unidades vendidas, con {lider.units} unidades y {money(lider.amount)} en ingresos.</p>
+                    <button onClick={() => router.push("/menu?vista=productos")}>Editar catálogo <span>→</span></button>
                   </>
                 ) : (
                   <>
@@ -271,7 +270,6 @@ export default function DashboardPage() {
             </section>
           </div>
         </div>
-        {notice && <div className="dashboard-toast">✓ {notice}</div>}
       </section>
     </main>
   );
