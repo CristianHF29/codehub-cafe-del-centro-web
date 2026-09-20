@@ -187,9 +187,9 @@ export default function AdminProductos() {
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-lg border border-amber-100">
+    <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-amber-100">
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-        <h3 className="text-xl font-bold text-amber-900">📋 Panel Admin: Catálogo de Productos</h3>
+        <h3 className="text-lg sm:text-xl font-bold text-amber-900">Panel Admin: Catálogo de Productos</h3>
         <button
           onClick={abrirNuevo}
           className="bg-amber-800 hover:bg-amber-900 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors shadow-sm"
@@ -285,7 +285,7 @@ export default function AdminProductos() {
 
             <div className="md:col-span-2">
               <label className="text-xs font-semibold text-gray-600 block mb-2">Precios por tamaño</label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {["16oz", "20oz", "24oz", "32oz"].map((oz) => (
                   <div key={oz}>
                     <label className="text-[11px] text-gray-500 block mb-1">{oz}</label>
@@ -339,70 +339,125 @@ export default function AdminProductos() {
       {productos.length === 0 ? (
         <p className="text-gray-500 text-center py-6">No hay productos en el catálogo.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider">
-                <th className="py-3 px-4">Producto</th>
-                <th className="py-3 px-4">Categoría</th>
-                <th className="py-3 px-4">Precio (16oz)</th>
-                <th className="py-3 px-4">Estado</th>
-                <th className="py-3 px-4 text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
-              {productos.map((producto) => (
-                <tr key={producto.id} className="hover:bg-amber-50/30 transition-colors">
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-3">
-                      {producto.imagen ? (
-                        <img
-                          src={producto.imagen}
-                          alt={producto.nombre}
-                          className="w-10 h-10 rounded-lg object-cover border border-gray-200"
-                          onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 text-xs">
-                          ☕
-                        </div>
-                      )}
-                      <div>
-                        <span className="font-bold text-gray-800 block">{producto.nombre}</span>
-                        <span className="text-xs text-gray-500 line-clamp-1">{producto.descripcion}</span>
-                      </div>
+        <>
+          <div className="md:hidden space-y-3">
+            {productos.map((producto) => (
+              <div key={producto.id} className="border border-gray-100 rounded-xl p-4 bg-gray-50/50">
+                <div className="flex gap-3">
+                  {producto.imagen ? (
+                    <img
+                      src={producto.imagen}
+                      alt={producto.nombre}
+                      className="w-14 h-14 rounded-lg object-cover border border-gray-200 shrink-0"
+                      onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+                      ☕
                     </div>
-                  </td>
-                  <td className="py-3 px-4 text-xs text-gray-600 capitalize">{producto.categoria}</td>
-                  <td className="py-3 px-4 font-semibold text-amber-900">
-                    ${producto.precios["16oz"].toFixed(2)}
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-                      producto.disponible ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
-                    }`}>
-                      {producto.disponible ? "Disponible" : "Oculto"}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-center space-x-1">
-                    <button
-                      onClick={() => abrirEdicion(producto)}
-                      className="px-2 py-1 text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 rounded font-medium"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleEliminar(producto)}
-                      className="px-2 py-1 text-xs bg-red-100 hover:bg-red-200 text-red-700 rounded font-medium"
-                    >
-                      Eliminar
-                    </button>
-                  </td>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-bold text-gray-800">{producto.nombre}</span>
+                      <span className="font-semibold text-amber-900 shrink-0">
+                        ${producto.precios["16oz"].toFixed(2)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 line-clamp-2">{producto.descripcion}</p>
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      <span className="text-xs text-gray-600 capitalize">{producto.categoria}</span>
+                      <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
+                        producto.disponible ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
+                      }`}>
+                        {producto.disponible ? "Disponible" : "Oculto"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <button
+                    onClick={() => abrirEdicion(producto)}
+                    className="py-2 text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg font-medium"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => handleEliminar(producto)}
+                    className="py-2 text-xs bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-medium"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider">
+                  <th className="py-3 px-4">Producto</th>
+                  <th className="py-3 px-4">Categoría</th>
+                  <th className="py-3 px-4">Precio (16oz)</th>
+                  <th className="py-3 px-4">Estado</th>
+                  <th className="py-3 px-4 text-center">Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-sm">
+                {productos.map((producto) => (
+                  <tr key={producto.id} className="hover:bg-amber-50/30 transition-colors">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        {producto.imagen ? (
+                          <img
+                            src={producto.imagen}
+                            alt={producto.nombre}
+                            className="w-10 h-10 rounded-lg object-cover border border-gray-200"
+                            onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 text-xs">
+                            ☕
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-bold text-gray-800 block">{producto.nombre}</span>
+                          <span className="text-xs text-gray-500 line-clamp-1">{producto.descripcion}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-xs text-gray-600 capitalize">{producto.categoria}</td>
+                    <td className="py-3 px-4 font-semibold text-amber-900">
+                      ${producto.precios["16oz"].toFixed(2)}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
+                        producto.disponible ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
+                      }`}>
+                        {producto.disponible ? "Disponible" : "Oculto"}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-center space-x-1">
+                      <button
+                        onClick={() => abrirEdicion(producto)}
+                        className="px-2 py-1 text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 rounded font-medium"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleEliminar(producto)}
+                        className="px-2 py-1 text-xs bg-red-100 hover:bg-red-200 text-red-700 rounded font-medium"
+                      >
+                        Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
