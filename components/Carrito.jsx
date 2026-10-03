@@ -5,12 +5,23 @@ import { useApp } from "@/context/AppContext";
 export default function Carrito() {
   const { carrito, actualizarCantidad, eliminarDelCarrito, calcularTotalCarrito, finalizarPedido } = useApp();
   const [mensajeExito, setMensajeExito] = useState(false);
+  const [mensajeError, setMensajeError] = useState(false);
+  const [enviando, setEnviando] = useState(false);
 
-  const handleCheckout = () => {
-    if (carrito.length === 0) return;
-    finalizarPedido();
-    setMensajeExito(true);
-    setTimeout(() => setMensajeExito(false), 4000);
+  const handleCheckout = async () => {
+    if (carrito.length === 0 || enviando) return;
+
+    setEnviando(true);
+    setMensajeError(false);
+    const guardado = await finalizarPedido();
+    setEnviando(false);
+
+    if (guardado) {
+      setMensajeExito(true);
+      setTimeout(() => setMensajeExito(false), 4000);
+    } else {
+      setMensajeError(true);
+    }
   };
 
   return (
@@ -25,6 +36,12 @@ export default function Carrito() {
       {mensajeExito && (
         <div className="mb-4 p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
           ¡Pedido realizado con éxito!
+        </div>
+      )}
+
+      {mensajeError && (
+        <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+          No se pudo registrar el pedido. Intenta de nuevo.
         </div>
       )}
 
@@ -71,9 +88,10 @@ export default function Carrito() {
 
           <button
             onClick={handleCheckout}
-            className="w-full mt-2 bg-amber-800 hover:bg-amber-900 text-white font-medium py-2.5 rounded-xl transition-colors shadow-md"
+            disabled={enviando}
+            className="w-full mt-2 bg-amber-800 hover:bg-amber-900 disabled:opacity-60 text-white font-medium py-2.5 rounded-xl transition-colors shadow-md"
           >
-            Confirmar Pedido
+            {enviando ? "Enviando..." : "Confirmar Pedido"}
           </button>
         </div>
       )}

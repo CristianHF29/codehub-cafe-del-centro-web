@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { usuarios } from "@/data/usuarios";
+import { usuarios, siguienteId } from "@/data/db";
 
 // POST /api/auth/registro - crea una cuenta de cliente
 export async function POST(request) {
@@ -17,14 +17,14 @@ export async function POST(request) {
 
         if (!formatoEmail.test(datos.email)) {
             return NextResponse.json(
-                { mensaje: "El correo no tiene un formato valido" },
+                { mensaje: "El correo no tiene un formato válido" },
                 { status: 400 }
             );
         }
 
         if (datos.password.length < 6) {
             return NextResponse.json(
-                { mensaje: "La contrasena debe tener al menos 6 caracteres" },
+                { mensaje: "La contraseña debe tener al menos 6 caracteres" },
                 { status: 400 }
             );
         }
@@ -41,7 +41,7 @@ export async function POST(request) {
         }
 
         const nuevoUsuario = {
-            id: usuarios.length > 0 ? usuarios[usuarios.length - 1].id + 1 : 1,
+            id: siguienteId(usuarios),
             nombre: datos.nombre,
             email: datos.email.toLowerCase(),
             password: datos.password,

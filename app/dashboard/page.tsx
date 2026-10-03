@@ -62,11 +62,20 @@ export default function DashboardPage() {
     setUsuario(datos);
   }, [router]);
 
+  // Se refresca cada 10 segundos para reflejar pedidos de la app movil
   useEffect(() => {
-    obtenerPedidos()
-      .then((data: Order[]) => setOrders(Array.isArray(data) ? data : []))
-      .catch((e: Error) => setError(e.message || "No se pudieron cargar los pedidos"))
-      .finally(() => setCargando(false));
+    const cargar = () =>
+      obtenerPedidos()
+        .then((data: Order[]) => {
+          setOrders(Array.isArray(data) ? data : []);
+          setError("");
+        })
+        .catch((e: Error) => setError(e.message || "No se pudieron cargar los pedidos"))
+        .finally(() => setCargando(false));
+
+    cargar();
+    const intervalo = setInterval(cargar, 10000);
+    return () => clearInterval(intervalo);
   }, []);
 
   const ranking = useMemo(() => {
