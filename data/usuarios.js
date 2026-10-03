@@ -14,5 +14,13 @@ export const usuarios = [
         password: "cliente123",
         rol: "cliente",
         puntos: 0
+    },
+    {
+        id: 3,
+        nombre: "Cristian Hernandez",
+        email: "chernandez@gmail.com",
+        password: "qwerty123",
+        rol: "cliente",
+        puntos: 0
     }
 ];
