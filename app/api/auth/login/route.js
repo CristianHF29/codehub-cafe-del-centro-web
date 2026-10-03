@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { usuarios } from "@/data/usuarios";
+import { usuarios } from "@/data/db";
 
 // POST /api/auth/login - valida credenciales
 export async function POST(request) {
@@ -8,7 +8,7 @@ export async function POST(request) {
 
         if (!datos.email || !datos.password) {
             return NextResponse.json(
-                { mensaje: "Se requiere correo y contrasena" },
+                { mensaje: "Se requiere correo y contraseña" },
                 { status: 400 }
             );
         }
@@ -19,7 +19,7 @@ export async function POST(request) {
 
         if (!usuario || usuario.password !== datos.password) {
             return NextResponse.json(
-                { mensaje: "Correo o contrasena incorrectos" },
+                { mensaje: "Correo o contraseña incorrectos" },
                 { status: 401 }
             );
         }
@@ -29,7 +29,7 @@ export async function POST(request) {
         return NextResponse.json(usuarioSinPassword, { status: 200 });
     } catch (error) {
         return NextResponse.json(
-            { mensaje: "Error al iniciar sesion" },
+            { mensaje: "Error al iniciar sesión" },
             { status: 500 }
         );
     }

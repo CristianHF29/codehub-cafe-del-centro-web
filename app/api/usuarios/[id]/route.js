@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { usuarios } from "@/data/usuarios";
+import { usuarios } from "@/data/db";
 
 // GET /api/usuarios/[id] - devuelve los datos y puntos del usuario
 export async function GET(request, { params }) {

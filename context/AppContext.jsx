@@ -1,12 +1,20 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { obtenerProductos } from "@/services/productosService";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import {
+  obtenerProductos,
+  crearProducto as apiCrearProducto,
+  actualizarProducto as apiActualizarProducto,
+  eliminarProducto as apiEliminarProducto
+} from "@/services/productosService";
 import {
   crearPedido as apiCrearPedido,
   cambiarEstadoPedido as apiCambiarEstado,
   obtenerPedidos,
   obtenerPedidosDeUsuario
 } from "@/services/pedidosService";
+import { obtenerUsuario } from "@/services/authService";
+
+const INTERVALO_ACTUALIZACION = 10000;
 
 const AppContext = createContext();
 
@@ -34,26 +42,51 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   // Cargar productos
-  useEffect(() => {
-    obtenerProductos()
+  const recargarProductos = () => {
+    return obtenerProductos()
       .then(data => setProductos(data))
       .catch(err => console.error("Error al cargar productos:", err));
+  };
+
+  useEffect(() => {
+    recargarProductos();
   }, []);
 
-  // Cargar pedidos segun el rol del usuario
+  const usuarioId = usuario?.id;
+  const rol = usuario?.rol;
+
+  // Pedidos segun el rol, y puntos tomados del servidor en lugar de la sesion guardada
+  const recargarPedidos = useCallback(async () => {
+    if (!usuarioId) return;
+
+    try {
+      if (rol === "admin") {
+        setPedidos(await obtenerPedidos());
+        return;
+      }
+
+      const [lista, datos] = await Promise.all([
+        obtenerPedidosDeUsuario(usuarioId),
+        obtenerUsuario(usuarioId)
+      ]);
+      setPedidos([...lista].reverse());
+      setPuntosUsuario(datos.puntos);
+    } catch (err) {
+      console.error("Error al cargar pedidos:", err);
+    }
+  }, [usuarioId, rol]);
+
+  // Se consulta cada 10 segundos para ver pedidos hechos desde la app movil
   useEffect(() => {
-    if (!usuario) {
+    if (!usuarioId) {
       setPedidos([]);
       return;
     }
-    const consulta = usuario.rol === "admin"
-      ? obtenerPedidos()
-      : obtenerPedidosDeUsuario(usuario.id);
 
-    consulta
-      .then(data => setPedidos(data))
-      .catch(err => console.error("Error al cargar pedidos:", err));
-  }, [usuario]);
+    recargarPedidos();
+    const intervalo = setInterval(recargarPedidos, INTERVALO_ACTUALIZACION);
+    return () => clearInterval(intervalo);
+  }, [usuarioId, recargarPedidos]);
 
   const cerrarSesion = () => {
     localStorage.removeItem("usuario");
@@ -107,7 +140,7 @@ export const AppProvider = ({ children }) => {
 
   // --- PEDIDOS ---
   const finalizarPedido = async () => {
-    if (carrito.length === 0 || !usuario) return;
+    if (carrito.length === 0 || !usuario) return false;
 
     const nuevoPedidoData = {
       usuarioId: usuario.id,
@@ -125,8 +158,10 @@ export const AppProvider = ({ children }) => {
       const actualizado = { ...usuario, puntos: respuesta.puntosTotales };
       setUsuario(actualizado);
       localStorage.setItem("usuario", JSON.stringify(actualizado));
+      return true;
     } catch (error) {
       console.error("Error al crear el pedido en la API:", error);
+      return false;
     }
   };
 
@@ -137,6 +172,24 @@ export const AppProvider = ({ children }) => {
     } catch (error) {
       console.error("Error al cambiar estado:", error);
     }
+  };
+
+  // --- PRODUCTOS (CRUD ADMIN) ---
+  const crearProductoAdmin = async (producto) => {
+    const nuevo = await apiCrearProducto(producto);
+    setProductos(prev => [...prev, nuevo]);
+    return nuevo;
+  };
+
+  const actualizarProductoAdmin = async (id, cambios) => {
+    const actualizado = await apiActualizarProducto(id, cambios);
+    setProductos(prev => prev.map(p => (p.id === id ? actualizado : p)));
+    return actualizado;
+  };
+
+  const eliminarProductoAdmin = async (id) => {
+    await apiEliminarProducto(id);
+    setProductos(prev => prev.filter(p => p.id !== id));
   };
 
   return (
@@ -151,7 +204,12 @@ export const AppProvider = ({ children }) => {
       actualizarCantidad,
       eliminarDelCarrito,
       calcularTotalCarrito,
+      recargarProductos,
+      crearProductoAdmin,
+      actualizarProductoAdmin,
+      eliminarProductoAdmin,
       pedidos,
+      recargarPedidos,
       finalizarPedido,
       cambiarEstadoPedido,
       puntosUsuario

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { productos } from "@/data/productos";
+import { productos } from "@/data/db";
 
 // GET /api/productos/[id] - devuelve un producto
 export async function GET(request, { params }) {

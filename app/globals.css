@@ -102,3 +102,97 @@ button { font: inherit; }
 
 @media (max-width: 1050px) { .store-header, .hero, .menu-section, .story-section, .contact-section, .store-footer { width: min(100% - 42px, 900px); }.store-nav { margin-left: 20px; gap: 18px; }.hero { padding-right: 3%; padding-left: 3%; }.menu-section { padding-right: 4%; padding-left: 4%; }.story-section, .contact-section { padding-right: 6%; padding-left: 6%; }.dashboard-sidebar { width: 205px; flex-basis: 205px; }.dashboard-topbar, .dashboard-content { padding-right: 28px; padding-left: 28px; }.dashboard-metrics { grid-template-columns: repeat(2, 1fr); }.dashboard-panels { grid-template-columns: 1fr; } }
 @media (max-width: 700px) { .store-header { width: calc(100% - 32px); min-height: 73px; }.store-nav, .dashboard-link { display: none; }.store-actions { gap: 4px; }.hero { width: 100%; min-height: 700px; display: block; padding: 75px 24px 56px; }.hero h1 { font-size: 72px; }.hero-copy > p { font-size: 13px; }.hero-actions { align-items: start; flex-direction: column; gap: 18px; }.hero-art { min-height: 300px; margin-top: 18px; }.sun-disc { width: 260px; }.hero-foot { right: 24px; bottom: 19px; left: 24px; font-size: 8px; }.hero-foot > span:first-child { display: none; }.scroll-hint { margin: auto; }.hero-foot > span:last-child { display: none; }.menu-section, .story-section, .contact-section { width: 100%; }.menu-section { padding: 72px 24px 78px; }.section-intro { display: block; }.section-intro > p { width: auto; margin-top: 25px; }.menu-grid { grid-template-columns: repeat(2, 1fr); gap: 9px; }.menu-card { min-height: 280px; padding: 17px; }.menu-card h3 { font-size: 20px; }.menu-card p { font-size: 10px; }.story-section { display: flex; flex-direction: column-reverse; gap: 46px; padding: 78px 24px 88px; }.story-visual { width: 100%; min-height: 330px; }.contact-section { display: block; padding: 61px 24px 67px; }.contact-section .primary-button { margin-top: 28px; }.store-footer { width: calc(100% - 32px); min-height: 130px; align-items: start; flex-wrap: wrap; gap: 15px; padding-top: 26px; }.store-footer > div { width: 100%; order: 3; }.dashboard-shell { display: block; }.dashboard-sidebar { width: 100%; min-height: auto; padding: 15px 16px; }.dashboard-brand { padding: 0; }.dashboard-menu-label, .dashboard-nav, .dashboard-report-label, .dashboard-nav-single, .dashboard-sidebar-bottom { display: none; }.dashboard-topbar { height: 55px; padding: 0 17px; }.dashboard-updated { display: none; }.dashboard-content { padding: 30px 17px 45px; }.dashboard-heading { display: block; }.dashboard-heading h1 { font-size: 38px; }.dashboard-heading-actions { margin-top: 23px; }.dashboard-period, .dashboard-export { flex: 1; }.dashboard-export span { display: none; }.dashboard-metrics { grid-template-columns: 1fr 1fr; gap: 8px; }.dashboard-metrics article { min-height: 126px; padding: 16px 11px; gap: 8px; }.metric-badge { width: 29px; height: 29px; flex-basis: 29px; }.metric-badge svg { width: 15px; height: 15px; }.dashboard-metrics strong { font-size: 20px; }.dashboard-metrics p { white-space: normal; line-height: 1.45; }.dashboard-panel { padding: 20px 15px; }.dashboard-panel h2 { font-size: 19px; }.ranking-chart { gap: 5px; padding-right: 0; padding-left: 0; }.ranking-column > span { max-width: 58px; font-size: 8px; }.ranking-bar-track { width: 70%; }.ranking-foot { align-items: start; flex-direction: column; gap: 12px; line-height: 1.4; }.sales-chart { height: 222px; }.sales-summary { gap: 22px; }.week-visual { display: block; }.week-result { margin-top: 15px; }.dashboard-insight { min-height: auto; }.dashboard-insight p { max-width: none; } }
+
+html, body { max-width: 100%; overflow-x: hidden; }
+img, svg { max-width: 100%; }
+
+@media (max-width: 700px) {
+  .hero h1 { font-size: clamp(44px, 16vw, 72px); }
+  .hero { min-height: auto; }
+
+  .store-header .dashboard-link { display: inline-block; font-size: 10px; }
+  .store-actions { gap: 10px; flex-wrap: wrap; justify-content: end; }
+
+  .menu-grid { grid-template-columns: 1fr; gap: 12px; }
+  .menu-card { min-height: auto; padding: 20px; }
+
+  .dashboard-sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    gap: 12px;
+    padding: 14px 16px 16px;
+  }
+  .dashboard-brand { padding: 0 0 4px; }
+  .dashboard-menu-label,
+  .dashboard-report-label { display: none; }
+
+  .dashboard-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 0;
+  }
+  .dashboard-nav button {
+    width: auto;
+    flex: 0 1 auto;
+    min-height: 36px;
+    gap: 7px;
+    padding: 0 13px;
+    border-radius: 999px;
+    background: #3b342c;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .dashboard-nav button b { min-width: 18px; margin-left: 2px; }
+
+  .dashboard-sidebar-bottom {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,.1);
+  }
+  .dashboard-sidebar-bottom .dashboard-nav-single {
+    display: inline-flex;
+    width: auto;
+    min-height: 36px;
+    margin-top: 0;
+    padding: 0 13px;
+    border-radius: 999px;
+    background: #4a4037;
+    color: #fff9ef;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .dashboard-user {
+    margin: 0 0 0 auto;
+    padding-top: 0;
+    border-top: 0;
+  }
+  .dashboard-user strong {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dashboard-heading-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .dashboard-heading-actions button { flex: 1 1 140px; }
+  .dashboard-breadcrumb { font-size: 10px; }
+
+  .ranking-chart { height: 210px; gap: 8px; }
+  .ranking-column { min-width: 0; }
+  .ranking-bar-track { width: min(44px, 80%); height: 120px; }
+  .ranking-column > span { max-width: none; font-size: 8px; }
+  .week-bars { gap: 6px; }
+  .week-bars > div > span { max-width: 18px; }
+}
+
+@media (max-width: 380px) {
+  .dashboard-metrics { grid-template-columns: 1fr; }
+  .dashboard-metrics article { min-height: auto; }
+  .dashboard-heading h1 { font-size: 32px; }
+  .dashboard-panel { padding: 18px 13px; }
+}

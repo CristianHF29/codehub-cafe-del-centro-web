@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { pedidos } from "@/data/pedidos";
-import { usuarios } from "@/data/usuarios";
+import { pedidos, usuarios, siguienteId } from "@/data/db";
 
 // GET /api/pedidos - lista todos los pedidos
 // GET /api/pedidos?usuarioId=2 - lista los pedidos de un cliente
@@ -60,17 +59,19 @@ export async function POST(request) {
         }
 
         const nuevoPedido = {
-            id: pedidos.length > 0 ? pedidos[pedidos.length - 1].id + 1 : 1,
+            id: siguienteId(pedidos),
             usuarioId: Number(datos.usuarioId),
             items: datos.items,
             total: datos.total,
             estado: "pendiente",
+            metodoPago: datos.metodoPago === "tarjeta" ? "tarjeta" : "efectivo",
+            referenciaPago: datos.metodoPago === "tarjeta" ? datos.referenciaPago ?? null : null,
             fecha: new Date().toISOString()
         };
 
         pedidos.push(nuevoPedido);
 
-        // Fidelizacion: 1 punto por cada dolar gastado
+        // Fidelización: 1 punto por cada dólar gastado
         const puntosGanados = Math.floor(datos.total);
         usuario.puntos += puntosGanados;
 
