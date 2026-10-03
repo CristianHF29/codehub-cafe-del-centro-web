@@ -200,16 +200,16 @@ function DashboardContent() {
 
 export default function Page() {
   return (
-    <AppProvider>
-      <Suspense
-        fallback={
-          <main className="min-h-screen bg-amber-50/40 flex items-center justify-center">
-            <p className="text-amber-900 font-medium">Cargando...</p>
-          </main>
-        }
-      >
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-amber-50/40 flex items-center justify-center">
+          <p className="text-amber-900 font-medium">Cargando...</p>
+        </main>
+      }
+    >
+      <AppProvider>
         <DashboardContent />
-      </Suspense>
-    </AppProvider>
+      </AppProvider>
+    </Suspense>
   );
 }
