@@ -11,6 +11,16 @@ const FORM_VACIO = {
   precios: { "16oz": "", "20oz": "", "24oz": "", "32oz": "" }
 };
 
+const NOMBRES_CATEGORIA = {
+  clasicos: "Clásicos calientes",
+  frios: "Especialidades frías",
+  filtrados: "Filtrados de especialidad"
+};
+
+function nombreCategoria(categoria) {
+  return NOMBRES_CATEGORIA[categoria] ?? categoria;
+}
+
 export default function AdminProductos() {
   const { productos, crearProductoAdmin, actualizarProductoAdmin, eliminarProductoAdmin } = useApp();
   const [editandoId, setEditandoId] = useState(null);
@@ -188,11 +198,14 @@ export default function AdminProductos() {
 
   return (
     <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-amber-100">
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-        <h3 className="text-lg sm:text-xl font-bold text-amber-900">Panel Admin: Catálogo de Productos</h3>
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+        <div>
+          <h3 className="text-xl font-bold text-amber-900">Catálogo de productos</h3>
+          <p className="text-sm text-gray-500">{productos.length} productos en el menú</p>
+        </div>
         <button
           onClick={abrirNuevo}
-          className="bg-amber-800 hover:bg-amber-900 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors shadow-sm"
+          className="bg-amber-800 hover:bg-amber-900 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
         >
           + Nuevo producto
         </button>
@@ -337,7 +350,7 @@ export default function AdminProductos() {
       )}
 
       {productos.length === 0 ? (
-        <p className="text-gray-500 text-center py-6">No hay productos en el catálogo.</p>
+        <p className="text-gray-500 text-center py-8">No hay productos en el catálogo.</p>
       ) : (
         <>
           <div className="md:hidden space-y-3">
@@ -348,11 +361,11 @@ export default function AdminProductos() {
                     <img
                       src={producto.imagen}
                       alt={producto.nombre}
-                      className="w-14 h-14 rounded-lg object-cover border border-gray-200 shrink-0"
+                      className="w-16 h-16 rounded-xl object-cover border border-gray-200 shrink-0"
                       onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
                     />
                   ) : (
-                    <div className="w-14 h-14 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+                    <div className="w-16 h-16 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 text-xl shrink-0">
                       ☕
                     </div>
                   )}
@@ -363,12 +376,11 @@ export default function AdminProductos() {
                         ${producto.precios["16oz"].toFixed(2)}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500 line-clamp-2">{producto.descripcion}</p>
+                    <p className="text-sm text-gray-500 line-clamp-2">{producto.descripcion}</p>
                     <div className="flex items-center gap-2 mt-2 flex-wrap">
-                      <span className="text-xs text-gray-600 capitalize">{producto.categoria}</span>
-                      <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
-                        producto.disponible ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
-                      }`}>
+                      <span className="text-xs text-gray-600">{nombreCategoria(producto.categoria)}</span>
+                      <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${producto.disponible ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
+                        }`}>
                         {producto.disponible ? "Disponible" : "Oculto"}
                       </span>
                     </div>
@@ -378,13 +390,13 @@ export default function AdminProductos() {
                 <div className="grid grid-cols-2 gap-2 mt-3">
                   <button
                     onClick={() => abrirEdicion(producto)}
-                    className="py-2 text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg font-medium"
+                    className="py-2 text-sm bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg font-medium"
                   >
                     Editar
                   </button>
                   <button
                     onClick={() => handleEliminar(producto)}
-                    className="py-2 text-xs bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-medium"
+                    className="py-2 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-medium"
                   >
                     Eliminar
                   </button>
@@ -404,53 +416,54 @@ export default function AdminProductos() {
                   <th className="py-3 px-4 text-center">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 text-sm">
+              <tbody className="divide-y divide-gray-100">
                 {productos.map((producto) => (
                   <tr key={producto.id} className="hover:bg-amber-50/30 transition-colors">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
+                    <td className="py-4 px-4">
+                      <div className="flex items-center gap-4">
                         {producto.imagen ? (
                           <img
                             src={producto.imagen}
                             alt={producto.nombre}
-                            className="w-10 h-10 rounded-lg object-cover border border-gray-200"
+                            className="w-16 h-16 rounded-xl object-cover border border-gray-200 shrink-0"
                             onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 text-xs">
+                          <div className="w-16 h-16 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 text-xl shrink-0">
                             ☕
                           </div>
                         )}
                         <div>
-                          <span className="font-bold text-gray-800 block">{producto.nombre}</span>
-                          <span className="text-xs text-gray-500 line-clamp-1">{producto.descripcion}</span>
+                          <span className="font-bold text-gray-800 text-base block">{producto.nombre}</span>
+                          <span className="text-sm text-gray-500 line-clamp-1">{producto.descripcion}</span>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-xs text-gray-600 capitalize">{producto.categoria}</td>
-                    <td className="py-3 px-4 font-semibold text-amber-900">
+                    <td className="py-4 px-4 text-sm text-gray-600">{nombreCategoria(producto.categoria)}</td>
+                    <td className="py-4 px-4 text-base font-semibold text-amber-900">
                       ${producto.precios["16oz"].toFixed(2)}
                     </td>
-                    <td className="py-3 px-4">
-                      <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-                        producto.disponible ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
-                      }`}>
+                    <td className="py-4 px-4">
+                      <span className={`px-3 py-1 text-xs font-semibold rounded-full ${producto.disponible ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
+                        }`}>
                         {producto.disponible ? "Disponible" : "Oculto"}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-center space-x-1">
-                      <button
-                        onClick={() => abrirEdicion(producto)}
-                        className="px-2 py-1 text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 rounded font-medium"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleEliminar(producto)}
-                        className="px-2 py-1 text-xs bg-red-100 hover:bg-red-200 text-red-700 rounded font-medium"
-                      >
-                        Eliminar
-                      </button>
+                    <td className="py-4 px-4">
+                      <div className="flex justify-center gap-2">
+                        <button
+                          onClick={() => abrirEdicion(producto)}
+                          className="px-3 py-1.5 text-sm bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg font-medium transition-colors"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleEliminar(producto)}
+                          className="px-3 py-1.5 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-medium transition-colors"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

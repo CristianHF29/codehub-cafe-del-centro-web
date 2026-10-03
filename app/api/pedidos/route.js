@@ -64,6 +64,8 @@ export async function POST(request) {
             items: datos.items,
             total: datos.total,
             estado: "pendiente",
+            metodoPago: datos.metodoPago === "tarjeta" ? "tarjeta" : "efectivo",
+            referenciaPago: datos.metodoPago === "tarjeta" ? datos.referenciaPago ?? null : null,
             fecha: new Date().toISOString()
         };
 
