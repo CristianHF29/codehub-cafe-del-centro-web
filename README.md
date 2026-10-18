@@ -4,7 +4,7 @@ Aplicacion web para Cafe del Centro, cafeteria de especialidad ubicada en el Cen
 
 Proyecto de la asignatura Diseno y Programacion de Software Multiplataforma (DPS941), Universidad Don Bosco, ciclo 02/2026. Etapa 2: modulo web con React y Next.js.
 
-## Equipo CodeHub (T-010)
+## Equipo
 
 | Integrante | Carnet
 |---|---|
