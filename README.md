@@ -6,8 +6,8 @@ Proyecto de la asignatura Diseno y Programacion de Software Multiplataforma (DPS
 
 ## Equipo CodeHub (T-010)
 
-| Integrante | Carnet 
-|---|---|---|
+| Integrante | Carnet
+|---|---|
 | Cristian Arturo Hernandez Flores | hf252375 |
 
 
