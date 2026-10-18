@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { productos } from "@/data/productos";
+import { productos, siguienteId } from "@/data/db";
 
 // GET /api/productos - devuelve todos los productos
 export async function GET() {
@@ -26,7 +26,7 @@ export async function POST(request) {
         }
 
         const nuevoProducto = {
-            id: productos.length > 0 ? productos[productos.length - 1].id + 1 : 1,
+            id: siguienteId(productos),
             nombre: datos.nombre,
             descripcion: datos.descripcion || "",
             categoria: datos.categoria,

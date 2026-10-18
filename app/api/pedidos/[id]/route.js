@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { pedidos } from "@/data/pedidos";
+import { pedidos } from "@/data/db";
 
 const ESTADOS_VALIDOS = ["pendiente", "listo", "entregado"];
 
@@ -40,7 +40,7 @@ export async function PUT(request, { params }) {
 
         if (!ESTADOS_VALIDOS.includes(datos.estado)) {
             return NextResponse.json(
-                { mensaje: "Estado invalido. Use: pendiente, listo o entregado" },
+                { mensaje: "Estado inválido. Use: pendiente, listo o entregado" },
                 { status: 400 }
             );
         }
