@@ -9,7 +9,7 @@ Proyecto de la asignatura Diseno y Programacion de Software Multiplataforma (DPS
 | Integrante | Carnet | Modulo desarrollado |
 |---|---|---|
 | Rebeca Flores | fd253107 | Autenticacion, registro y rutas protegidas |
-| Cristian Arturo Hernandez Flores | hf252375 | API REST, capa de servicios e integracion de modulos |
+| Cristian Hernandez | hf252375 | API REST, capa de servicios e integracion de modulos |
 | Henry Chacon | cg253400 | Catalogo de productos y gestion de imagenes |
 | Giovanni Quijano | qs242538 | Carrito de compras, pedidos y puntos de fidelidad |
 | Eduardo Amaya | am210570 | Landing page, dashboard de reportes y despliegue |
