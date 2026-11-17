@@ -1,66 +1,63 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { obtenerProductos } from "@/services/productosService";
+import { useSesion } from "./SesionContext";
 import {
-  crearPedido as apiCrearPedido,
-  cambiarEstadoPedido as apiCambiarEstado,
-  obtenerPedidos,
-  obtenerPedidosDeUsuario
+  escucharProductos,
+  crearProducto,
+  actualizarProducto,
+  eliminarProducto
+} from "@/services/productosService";
+import {
+  crearPedido,
+  cambiarEstadoPedido as guardarEstadoPedido,
+  escucharPedidosDeUsuario,
+  escucharTodosLosPedidos
 } from "@/services/pedidosService";
+import { escucharClientes } from "@/services/usuariosService";
+import { mensajeError } from "@/services/errores";
 
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  const [usuario, setUsuario] = useState(null);
-  const [cargandoSesion, setCargandoSesion] = useState(true);
+  const { usuario, cargando: cargandoSesion, esAdmin, cerrarSesion: salir } = useSesion();
   const [productos, setProductos] = useState([]);
   const [carrito, setCarrito] = useState([]);
-  const [puntosUsuario, setPuntosUsuario] = useState(0);
   const [pedidos, setPedidos] = useState([]);
+  const [clientes, setClientes] = useState({});
 
-  // Recuperar la sesion guardada al iniciar
+  // Catálogo en tiempo real desde Firestore
   useEffect(() => {
-    try {
-      const guardado = localStorage.getItem("usuario");
-      if (guardado) {
-        const datos = JSON.parse(guardado);
-        setUsuario(datos);
-        setPuntosUsuario(datos.puntos ?? 0);
-      }
-    } catch {
-      localStorage.removeItem("usuario");
-    }
-    setCargandoSesion(false);
+    return escucharProductos(
+      setProductos,
+      (err) => console.error("Error al cargar productos:", err)
+    );
   }, []);
 
-  // Cargar productos
+  const usuarioId = usuario?.id;
+
+  // Pedidos en tiempo real: el admin ve todos, el cliente solo los suyos.
+  // Reemplaza la consulta cada 10 segundos que se usaba con la API en memoria.
   useEffect(() => {
-    obtenerProductos()
-      .then(data => setProductos(data))
-      .catch(err => console.error("Error al cargar productos:", err));
-  }, []);
+    if (!usuarioId) return;
 
-  // Cargar pedidos segun el rol del usuario
+    const alFallar = (err) => console.error("Error al cargar pedidos:", err);
+    return esAdmin
+      ? escucharTodosLosPedidos(setPedidos, alFallar)
+      : escucharPedidosDeUsuario(usuarioId, setPedidos, alFallar);
+  }, [usuarioId, esAdmin]);
+
+  // El admin necesita los nombres de los clientes para la tabla de pedidos
   useEffect(() => {
-    if (!usuario) {
-      setPedidos([]);
-      return;
-    }
-    const consulta = usuario.rol === "admin"
-      ? obtenerPedidos()
-      : obtenerPedidosDeUsuario(usuario.id);
+    if (!esAdmin) return;
+    return escucharClientes(
+      setClientes,
+      (err) => console.error("Error al cargar clientes:", err)
+    );
+  }, [esAdmin]);
 
-    consulta
-      .then(data => setPedidos(data))
-      .catch(err => console.error("Error al cargar pedidos:", err));
-  }, [usuario]);
-
-  const cerrarSesion = () => {
-    localStorage.removeItem("usuario");
-    setUsuario(null);
+  const cerrarSesion = async () => {
     setCarrito([]);
-    setPedidos([]);
-    setPuntosUsuario(0);
+    await salir();
   };
 
   // --- CARRITO ---
@@ -76,8 +73,8 @@ export const AppProvider = ({ children }) => {
             : item
         );
       }
+      // Mismo formato de item que usa la app móvil
       return [...prev, {
-        productoId: producto.id,
         id: producto.id,
         nombre: producto.nombre,
         tamano: tamano,
@@ -106,44 +103,61 @@ export const AppProvider = ({ children }) => {
   };
 
   // --- PEDIDOS ---
-  const finalizarPedido = async () => {
-    if (carrito.length === 0 || !usuario) return;
-
-    const nuevoPedidoData = {
-      usuarioId: usuario.id,
-      items: [...carrito],
-      total: Number(calcularTotalCarrito())
-    };
+  // Los puntos y la lista de pedidos se actualizan solos por los listeners.
+  // Devuelve el pedido creado y los puntos ganados, para la pantalla de confirmación.
+  const finalizarPedido = async ({ metodoPago = "efectivo", referenciaPago = null } = {}) => {
+    if (carrito.length === 0 || !usuario) {
+      throw new Error("El carrito está vacío");
+    }
 
     try {
-      const respuesta = await apiCrearPedido(nuevoPedidoData);
-      setPedidos(prev => [respuesta.pedido, ...prev]);
-      setPuntosUsuario(respuesta.puntosTotales);
+      const respuesta = await crearPedido({
+        usuarioId: usuario.id,
+        items: [...carrito],
+        total: Number(calcularTotalCarrito()),
+        metodoPago,
+        referenciaPago
+      });
       setCarrito([]);
-
-      // Mantener los puntos sincronizados en la sesion guardada
-      const actualizado = { ...usuario, puntos: respuesta.puntosTotales };
-      setUsuario(actualizado);
-      localStorage.setItem("usuario", JSON.stringify(actualizado));
+      return respuesta;
     } catch (error) {
-      console.error("Error al crear el pedido en la API:", error);
+      throw new Error(mensajeError(error));
     }
   };
 
   const cambiarEstadoPedido = async (idPedido, nuevoEstado) => {
     try {
-      await apiCambiarEstado(idPedido, nuevoEstado);
-      setPedidos(prev => prev.map(p => p.id === idPedido ? { ...p, estado: nuevoEstado } : p));
+      await guardarEstadoPedido(idPedido, nuevoEstado);
     } catch (error) {
-      console.error("Error al cambiar estado:", error);
+      console.error("Error al cambiar estado:", mensajeError(error));
     }
   };
+
+  // --- PRODUCTOS (CRUD ADMIN) ---
+  // Los errores se traducen para que el formulario muestre un mensaje claro
+  const conMensaje = async (accion) => {
+    try {
+      return await accion();
+    } catch (error) {
+      throw new Error(mensajeError(error));
+    }
+  };
+
+  const crearProductoAdmin = (producto) => conMensaje(() => {
+    // La app móvil ordena el menú por "orden": el producto nuevo va al final
+    const siguienteOrden = productos.reduce((max, p) => Math.max(max, p.orden ?? 0), 0) + 1;
+    return crearProducto({ ...producto, orden: siguienteOrden });
+  });
+
+  const actualizarProductoAdmin = (id, cambios) => conMensaje(() => actualizarProducto(id, cambios));
+
+  const eliminarProductoAdmin = (id) => conMensaje(() => eliminarProducto(id));
 
   return (
     <AppContext.Provider value={{
       usuario,
       cargandoSesion,
-      esAdmin: usuario?.rol === "admin",
+      esAdmin,
       cerrarSesion,
       productos,
       carrito,
@@ -151,10 +165,15 @@ export const AppProvider = ({ children }) => {
       actualizarCantidad,
       eliminarDelCarrito,
       calcularTotalCarrito,
-      pedidos,
+      crearProductoAdmin,
+      actualizarProductoAdmin,
+      eliminarProductoAdmin,
+      // Sin sesión no se muestran pedidos de una sesión anterior
+      pedidos: usuarioId ? pedidos : [],
+      clientes: esAdmin ? clientes : {},
       finalizarPedido,
       cambiarEstadoPedido,
-      puntosUsuario
+      puntosUsuario: usuario?.puntos ?? 0
     }}>
       {children}
     </AppContext.Provider>

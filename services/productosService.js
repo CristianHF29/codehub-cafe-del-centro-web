@@ -1,27 +1,48 @@
-import { peticion } from "./api";
+import {
+    addDoc,
+    collection,
+    deleteDoc,
+    doc,
+    getDocs,
+    onSnapshot,
+    orderBy,
+    query,
+    updateDoc,
+} from "firebase/firestore";
+import { db } from "./firebase";
 
-export function obtenerProductos() {
-    return peticion("/productos");
+// Mismo orden que usa la app móvil para mostrar el menú
+const consultaProductos = () => query(collection(db, "productos"), orderBy("orden"));
+
+function convertir(documento) {
+    return { id: documento.id, ...documento.data() };
 }
 
-export function obtenerProducto(id) {
-    return peticion(`/productos/${id}`);
+export async function obtenerProductos() {
+    const resultado = await getDocs(consultaProductos());
+    return resultado.docs.map(convertir);
 }
 
-export function crearProducto(producto) {
-    return peticion("/productos", {
-        method: "POST",
-        body: JSON.stringify(producto)
-    });
+// El catálogo se escucha en tiempo real: si el admin edita un producto,
+// el cambio aparece en la web y en el teléfono sin recargar
+export function escucharProductos(alCambiar, alFallar) {
+    return onSnapshot(
+        consultaProductos(),
+        (resultado) => alCambiar(resultado.docs.map(convertir)),
+        alFallar
+    );
 }
 
-export function actualizarProducto(id, cambios) {
-    return peticion(`/productos/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(cambios)
-    });
+export async function crearProducto(producto) {
+    const referencia = await addDoc(collection(db, "productos"), producto);
+    return { id: referencia.id, ...producto };
+}
+
+export async function actualizarProducto(id, cambios) {
+    await updateDoc(doc(db, "productos", id), cambios);
+    return { id, ...cambios };
 }
 
 export function eliminarProducto(id) {
-    return peticion(`/productos/${id}`, { method: "DELETE" });
+    return deleteDoc(doc(db, "productos", id));
 }

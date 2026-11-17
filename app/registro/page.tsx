@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { registrar } from "@/services/authService";
+import { useSesion } from "@/context/SesionContext";
+import { mensajeError } from "@/services/errores";
+import BotonGoogle from "@/components/BotonGoogle";
 
 export default function RegistroPage() {
   const router = useRouter();
+  const { usuario, cargando: cargandoSesion, registrarse, iniciarConGoogle } = useSesion();
 
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
@@ -13,17 +16,12 @@ export default function RegistroPage() {
   const [mensaje, setMensaje] = useState("");
   const [cargando, setCargando] = useState(false);
 
+  // Al crearse la cuenta Firebase inicia la sesión, y este efecto lleva al menú
   useEffect(() => {
-    const guardado = localStorage.getItem("usuario");
-    if (guardado) {
-      try {
-        const datos = JSON.parse(guardado);
-        router.push(datos.rol === "admin" ? "/dashboard" : "/menu");
-      } catch {
-        localStorage.removeItem("usuario");
-      }
+    if (!cargandoSesion && usuario) {
+      router.push(usuario.rol === "admin" ? "/dashboard" : "/menu");
     }
-  }, [router]);
+  }, [cargandoSesion, usuario, router]);
 
   const registrarUsuario = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,15 +41,22 @@ export default function RegistroPage() {
     setCargando(true);
 
     try {
-      const datos = await registrar(nombre.trim(), email.trim(), password);
-
-      localStorage.setItem("usuario", JSON.stringify(datos));
-
-      router.push("/menu");
+      await registrarse(nombre, email, password);
     } catch (error: unknown) {
-      const texto = error instanceof Error ? error.message : "Error al registrar la cuenta";
-      setMensaje(texto);
-    } finally {
+      setMensaje(mensajeError(error));
+      setCargando(false);
+    }
+  };
+
+  const entrarConGoogle = async () => {
+    setMensaje("");
+    setCargando(true);
+
+    try {
+      const user = await iniciarConGoogle();
+      if (!user) setCargando(false);
+    } catch (error: unknown) {
+      setMensaje(mensajeError(error));
       setCargando(false);
     }
   };
@@ -169,6 +174,8 @@ export default function RegistroPage() {
             {cargando ? "Registrando..." : "Crear cuenta"}
           </button>
         </form>
+
+        <BotonGoogle onClick={entrarConGoogle} deshabilitado={cargando} />
 
         <p style={{ textAlign: "center", marginTop: "22px", color: "var(--muted)" }}>
           ¿Ya tienes una cuenta?

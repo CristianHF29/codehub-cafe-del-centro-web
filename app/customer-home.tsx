@@ -3,17 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { obtenerProductos } from "@/services/productosService";
+import { useSesion } from "@/context/SesionContext";
 
 type Product = {
-  id: number;
+  id: string;
   nombre: string;
   descripcion: string;
   categoria: string;
   disponible: boolean;
   precios?: Record<string, number>;
 };
-
-type Usuario = { id: number; nombre: string; rol: string };
 
 function CoffeeIcon() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 8h12v7a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V8Z" /><path d="M17 10h2a3 3 0 0 1 0 6h-2M8 4c0 1 .7 1.3.7 2.2M12 3c0 1 .7 1.3.7 2.2" /></svg>;
@@ -34,16 +33,8 @@ export default function CustomerHome() {
   const [products, setProducts] = useState<Product[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
-  const [usuario, setUsuario] = useState<Usuario | null>(null);
-
-  useEffect(() => {
-    try {
-      const guardado = localStorage.getItem("usuario");
-      if (guardado) setUsuario(JSON.parse(guardado));
-    } catch {
-      localStorage.removeItem("usuario");
-    }
-  }, []);
+  // La sesión viene de Firebase (antes se leía de localStorage)
+  const { usuario, cerrarSesion } = useSesion();
 
   useEffect(() => {
     obtenerProductos()
@@ -55,11 +46,6 @@ export default function CustomerHome() {
   }, []);
 
   const destacados = products.slice(0, 4);
-
-  function cerrarSesion() {
-    localStorage.removeItem("usuario");
-    setUsuario(null);
-  }
 
   function irAMiZona() {
     router.push(usuario?.rol === "admin" ? "/dashboard" : "/menu");

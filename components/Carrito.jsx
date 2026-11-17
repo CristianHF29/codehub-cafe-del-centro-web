@@ -1,17 +1,11 @@
 "use client";
 import React, { useState } from "react";
 import { useApp } from "@/context/AppContext";
+import ModalPago from "@/components/ModalPago";
 
 export default function Carrito() {
-  const { carrito, actualizarCantidad, eliminarDelCarrito, calcularTotalCarrito, finalizarPedido } = useApp();
-  const [mensajeExito, setMensajeExito] = useState(false);
-
-  const handleCheckout = () => {
-    if (carrito.length === 0) return;
-    finalizarPedido();
-    setMensajeExito(true);
-    setTimeout(() => setMensajeExito(false), 4000);
-  };
+  const { carrito, actualizarCantidad, eliminarDelCarrito, calcularTotalCarrito } = useApp();
+  const [pagoAbierto, setPagoAbierto] = useState(false);
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-lg border border-amber-100 max-w-md w-full">
@@ -21,12 +15,6 @@ export default function Carrito() {
           {carrito.reduce((acc, item) => acc + item.cantidad, 0)} ítems
         </span>
       </h2>
-
-      {mensajeExito && (
-        <div className="mb-4 p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
-          ¡Pedido realizado con éxito!
-        </div>
-      )}
 
       {carrito.length === 0 ? (
         <p className="text-gray-500 text-center py-6">El carrito está vacío. ¡Elige tu bebida favorita!</p>
@@ -44,11 +32,13 @@ export default function Carrito() {
                   <div className="flex items-center border rounded-lg bg-gray-50">
                     <button
                       onClick={() => actualizarCantidad(item.id, item.tamano, -1)}
+                      aria-label={`Quitar un ${item.nombre}`}
                       className="px-2 py-1 text-gray-600 hover:bg-gray-200 rounded-l"
                     >-</button>
                     <span className="px-2 text-sm font-medium">{item.cantidad}</span>
                     <button
                       onClick={() => actualizarCantidad(item.id, item.tamano, 1)}
+                      aria-label={`Agregar otro ${item.nombre}`}
                       className="px-2 py-1 text-gray-600 hover:bg-gray-200 rounded-r"
                     >+</button>
                   </div>
@@ -56,6 +46,7 @@ export default function Carrito() {
                     onClick={() => eliminarDelCarrito(item.id, item.tamano)}
                     className="text-red-500 hover:text-red-700 text-sm p-1"
                     title="Eliminar"
+                    aria-label={`Eliminar ${item.nombre} del carrito`}
                   >
                     🗑️
                   </button>
@@ -70,13 +61,16 @@ export default function Carrito() {
           </div>
 
           <button
-            onClick={handleCheckout}
+            onClick={() => setPagoAbierto(true)}
             className="w-full mt-2 bg-amber-800 hover:bg-amber-900 text-white font-medium py-2.5 rounded-xl transition-colors shadow-md"
           >
-            Confirmar Pedido
+            Continuar al pago
           </button>
         </div>
       )}
+
+      {/* El modal sigue abierto al vaciarse el carrito, para mostrar la confirmación */}
+      <ModalPago abierto={pagoAbierto} onCerrar={() => setPagoAbierto(false)} />
     </div>
   );
 }
