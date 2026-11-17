@@ -18,7 +18,7 @@ Proyecto de la asignatura **Diseño y Programación de Software Multiplataforma 
 
 | Rol | Correo | Contraseña |
 |---|---|---|
-| Administrador | [CORREO ADMIN] | [CONTRASEÑA ADMIN] |
+| Administrador | cristian.prueba@gmail.com | cafe2026 |
 | Cliente | Crear una cuenta desde `/registro` o entrar con Google | |
 
 Toda cuenta nueva se crea con rol de cliente. El rol de administrador solo se asigna desde la consola de Firebase.
