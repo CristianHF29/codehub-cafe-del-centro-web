@@ -34,7 +34,7 @@ export default function ClienteDashboard() {
       {/* Historial de Pedidos */}
       <div className="md:col-span-2 bg-white p-6 rounded-2xl shadow-lg border border-amber-100">
         <h3 className="text-xl font-bold text-amber-900 mb-4">📋 Mis Pedidos Activos e Historial</h3>
-        
+
         {pedidos.length === 0 ? (
           <p className="text-gray-500 text-center py-6">No tienes pedidos registrados aún.</p>
         ) : (
@@ -43,7 +43,7 @@ export default function ClienteDashboard() {
               <div key={pedido.id} className="border border-gray-100 p-4 rounded-xl shadow-sm bg-gray-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <div className="flex items-center space-x-2">
-                    <span className="font-bold text-gray-800">Pedido #{pedido.id}</span>
+                    <span className="font-bold text-gray-800">Pedido #{String(pedido.id).slice(0, 6).toUpperCase()}</span>
                     <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full border ${getEstadoBadge(pedido.estado)}`}>
                       {pedido.estado}
                     </span>

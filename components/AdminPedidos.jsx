@@ -48,7 +48,7 @@ export default function AdminPedidos() {
     <div className="bg-white p-5 sm:p-8 rounded-2xl shadow-lg border border-amber-100">
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-amber-900">Gestión de pedidos</h3>
-        <p className="text-sm text-gray-500 mt-1">Se actualiza automáticamente cada 10 segundos</p>
+        <p className="text-sm text-gray-500 mt-1">Se actualiza en tiempo real, con los pedidos de la web y de la app móvil</p>
       </div>
 
       <div className="md:hidden space-y-3">
@@ -56,7 +56,7 @@ export default function AdminPedidos() {
           <div key={pedido.id} className="border border-gray-100 rounded-xl p-4 bg-gray-50/50">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <span className="font-bold text-gray-800">Pedido #{pedido.id}</span>
+                <span className="font-bold text-gray-800">Pedido #{String(pedido.id).slice(0, 6).toUpperCase()}</span>
                 <span className="text-xs text-gray-500 block">Usuario ID: {pedido.usuarioId}</span>
               </div>
               <span className="text-lg font-extrabold text-amber-900 shrink-0">
@@ -105,7 +105,7 @@ export default function AdminPedidos() {
             {pedidos.map((pedido) => (
               <tr key={pedido.id} className="hover:bg-amber-50/40 transition-colors align-top">
                 <td className="py-5 px-5">
-                  <span className="font-bold text-gray-900 text-lg block">#{pedido.id}</span>
+                  <span className="font-bold text-gray-900 text-lg block">#{String(pedido.id).slice(0, 6).toUpperCase()}</span>
                   <span className="text-sm text-gray-500 block">Cliente {pedido.usuarioId}</span>
                   <span className="text-sm text-gray-400 block">{hora(pedido.fecha)}</span>
                 </td>

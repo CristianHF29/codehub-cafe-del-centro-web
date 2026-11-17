@@ -2,28 +2,25 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { login } from "@/services/authService";
+import { useSesion } from "@/context/SesionContext";
+import { mensajeError } from "@/services/errores";
+import BotonGoogle from "@/components/BotonGoogle";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { usuario, cargando: cargandoSesion, iniciarSesion: entrar, iniciarConGoogle } = useSesion();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [cargando, setCargando] = useState(false);
 
-  // Si ya hay sesion activa, no tiene sentido mostrar el login
+  // Si ya hay sesión activa (o recién se inició), se envía a su zona según el rol
   useEffect(() => {
-    const guardado = localStorage.getItem("usuario");
-    if (guardado) {
-      try {
-        const datos = JSON.parse(guardado);
-        router.push(datos.rol === "admin" ? "/dashboard" : "/menu");
-      } catch {
-        localStorage.removeItem("usuario");
-      }
+    if (!cargandoSesion && usuario) {
+      router.push(usuario.rol === "admin" ? "/dashboard" : "/menu");
     }
-  }, [router]);
+  }, [cargandoSesion, usuario, router]);
 
   const iniciarSesion = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,19 +29,23 @@ export default function LoginPage() {
     setCargando(true);
 
     try {
-      const datos = await login(email, password);
-
-      localStorage.setItem("usuario", JSON.stringify(datos));
-
-      if (datos.rol === "admin") {
-        router.push("/dashboard");
-      } else {
-        router.push("/menu");
-      }
+      // La redirección la hace el efecto de arriba cuando Firebase confirma la sesión
+      await entrar(email, password);
     } catch (error: unknown) {
-      const texto = error instanceof Error ? error.message : "Error al iniciar sesión";
-      setMensaje(texto);
-    } finally {
+      setMensaje(mensajeError(error));
+      setCargando(false);
+    }
+  };
+
+  const entrarConGoogle = async () => {
+    setMensaje("");
+    setCargando(true);
+
+    try {
+      const user = await iniciarConGoogle();
+      if (!user) setCargando(false); // Cerró la ventana de Google sin elegir cuenta
+    } catch (error: unknown) {
+      setMensaje(mensajeError(error));
       setCargando(false);
     }
   };
@@ -141,6 +142,8 @@ export default function LoginPage() {
             {cargando ? "Ingresando..." : "Iniciar sesión"}
           </button>
         </form>
+
+        <BotonGoogle onClick={entrarConGoogle} deshabilitado={cargando} />
 
         <p style={{ textAlign: "center", marginTop: "22px", color: "var(--muted)" }}>
           ¿No tienes una cuenta?

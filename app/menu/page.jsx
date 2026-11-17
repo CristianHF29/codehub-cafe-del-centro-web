@@ -33,8 +33,8 @@ function DashboardContent() {
     setTamanosSeleccionados(prev => ({ ...prev, [productoId]: tamano }));
   };
 
-  const handleCerrarSesion = () => {
-    cerrarSesion();
+  const handleCerrarSesion = async () => {
+    await cerrarSesion();
     router.push("/login");
   };
 
@@ -170,8 +170,8 @@ function DashboardContent() {
               <button
                 onClick={() => setVistaAdmin("pedidos")}
                 className={`flex-1 sm:flex-none px-6 py-3 text-base font-semibold rounded-xl transition-colors ${vistaAdmin === "pedidos"
-                    ? "bg-amber-800 text-white"
-                    : "text-gray-600 hover:bg-amber-50"
+                  ? "bg-amber-800 text-white"
+                  : "text-gray-600 hover:bg-amber-50"
                   }`}
               >
                 Pedidos
@@ -179,8 +179,8 @@ function DashboardContent() {
               <button
                 onClick={() => setVistaAdmin("productos")}
                 className={`flex-1 sm:flex-none px-6 py-3 text-base font-semibold rounded-xl transition-colors ${vistaAdmin === "productos"
-                    ? "bg-amber-800 text-white"
-                    : "text-gray-600 hover:bg-amber-50"
+                  ? "bg-amber-800 text-white"
+                  : "text-gray-600 hover:bg-amber-50"
                   }`}
               >
                 Catálogo

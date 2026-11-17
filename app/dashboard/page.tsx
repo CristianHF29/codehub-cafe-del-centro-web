@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { obtenerPedidos } from "@/services/pedidosService";
+import { escucharTodosLosPedidos } from "@/services/pedidosService";
+import { useSesion } from "@/context/SesionContext";
+import { mensajeError } from "@/services/errores";
 
 type OrderItem = { nombre?: string; nombreProducto?: string; cantidad?: number; precio?: number };
-type Order = { id: number; usuarioId?: number; items?: OrderItem[]; total?: number; estado?: string; fecha?: string };
+type Order = { id: string; usuarioId?: string; items?: OrderItem[]; total?: number; estado?: string; fecha?: string };
 type RankingItem = { name: string; units: number; amount: number; color: string };
 
 const COLORS = ["#b77945", "#ca9a6a", "#8e9c76", "#d7b36e", "#9caeb0"];
@@ -38,45 +40,36 @@ function shortProductName(name: string) {
 export default function DashboardPage() {
   const router = useRouter();
 
-  const [usuario, setUsuario] = useState<{ nombre?: string; rol?: string } | null>(null);
+  const { usuario, cargando: cargandoSesion, cerrarSesion: salir } = useSesion();
   const [active, setActive] = useState("Resumen");
   const [orders, setOrders] = useState<Order[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
 
+  // Solo el administrador puede ver el dashboard
   useEffect(() => {
-    const usuarioGuardado = localStorage.getItem("usuario");
+    if (cargandoSesion) return;
+    if (!usuario) router.push("/login");
+    else if (usuario.rol !== "admin") router.push("/menu");
+  }, [cargandoSesion, usuario, router]);
 
-    if (!usuarioGuardado) {
-      router.push("/login");
-      return;
-    }
-
-    const datos = JSON.parse(usuarioGuardado);
-
-    if (datos.rol !== "admin") {
-      router.push("/menu");
-      return;
-    }
-
-    setUsuario(datos);
-  }, [router]);
-
-  // Se refresca cada 10 segundos para reflejar pedidos de la app movil
+  // Todos los pedidos en tiempo real, hechos desde la web o desde la app móvil
+  const esAdmin = usuario?.rol === "admin";
   useEffect(() => {
-    const cargar = () =>
-      obtenerPedidos()
-        .then((data: Order[]) => {
-          setOrders(Array.isArray(data) ? data : []);
-          setError("");
-        })
-        .catch((e: Error) => setError(e.message || "No se pudieron cargar los pedidos"))
-        .finally(() => setCargando(false));
+    if (!esAdmin) return;
 
-    cargar();
-    const intervalo = setInterval(cargar, 10000);
-    return () => clearInterval(intervalo);
-  }, []);
+    return escucharTodosLosPedidos(
+      (data: Order[]) => {
+        setOrders(data);
+        setError("");
+        setCargando(false);
+      },
+      (e: Error) => {
+        setError(mensajeError(e));
+        setCargando(false);
+      }
+    );
+  }, [esAdmin]);
 
   const ranking = useMemo(() => {
     const totals = new Map<string, { units: number; amount: number }>();
@@ -138,12 +131,12 @@ export default function DashboardPage() {
     year: "numeric",
   }).toUpperCase();
 
-  function cerrarSesion() {
-    localStorage.removeItem("usuario");
+  async function cerrarSesion() {
+    await salir();
     router.push("/login");
   }
 
-  if (!usuario) {
+  if (!usuario || !esAdmin) {
     return null;
   }
 

@@ -1,99 +1,52 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { useSesion } from "./SesionContext";
 import {
-  obtenerProductos,
-  crearProducto as apiCrearProducto,
-  actualizarProducto as apiActualizarProducto,
-  eliminarProducto as apiEliminarProducto
+  escucharProductos,
+  crearProducto,
+  actualizarProducto,
+  eliminarProducto
 } from "@/services/productosService";
 import {
-  crearPedido as apiCrearPedido,
-  cambiarEstadoPedido as apiCambiarEstado,
-  obtenerPedidos,
-  obtenerPedidosDeUsuario
+  crearPedido,
+  cambiarEstadoPedido as guardarEstadoPedido,
+  escucharPedidosDeUsuario,
+  escucharTodosLosPedidos
 } from "@/services/pedidosService";
-import { obtenerUsuario } from "@/services/authService";
-
-const INTERVALO_ACTUALIZACION = 10000;
+import { mensajeError } from "@/services/errores";
 
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  const [usuario, setUsuario] = useState(null);
-  const [cargandoSesion, setCargandoSesion] = useState(true);
+  const { usuario, cargando: cargandoSesion, esAdmin, cerrarSesion: salir } = useSesion();
   const [productos, setProductos] = useState([]);
   const [carrito, setCarrito] = useState([]);
-  const [puntosUsuario, setPuntosUsuario] = useState(0);
   const [pedidos, setPedidos] = useState([]);
 
-  // Recuperar la sesion guardada al iniciar
+  // Catálogo en tiempo real desde Firestore
   useEffect(() => {
-    try {
-      const guardado = localStorage.getItem("usuario");
-      if (guardado) {
-        const datos = JSON.parse(guardado);
-        setUsuario(datos);
-        setPuntosUsuario(datos.puntos ?? 0);
-      }
-    } catch {
-      localStorage.removeItem("usuario");
-    }
-    setCargandoSesion(false);
-  }, []);
-
-  // Cargar productos
-  const recargarProductos = () => {
-    return obtenerProductos()
-      .then(data => setProductos(data))
-      .catch(err => console.error("Error al cargar productos:", err));
-  };
-
-  useEffect(() => {
-    recargarProductos();
+    return escucharProductos(
+      setProductos,
+      (err) => console.error("Error al cargar productos:", err)
+    );
   }, []);
 
   const usuarioId = usuario?.id;
-  const rol = usuario?.rol;
 
-  // Pedidos segun el rol, y puntos tomados del servidor en lugar de la sesion guardada
-  const recargarPedidos = useCallback(async () => {
+  // Pedidos en tiempo real: el admin ve todos, el cliente solo los suyos.
+  // Reemplaza la consulta cada 10 segundos que se usaba con la API en memoria.
+  useEffect(() => {
     if (!usuarioId) return;
 
-    try {
-      if (rol === "admin") {
-        setPedidos(await obtenerPedidos());
-        return;
-      }
+    const alFallar = (err) => console.error("Error al cargar pedidos:", err);
+    return esAdmin
+      ? escucharTodosLosPedidos(setPedidos, alFallar)
+      : escucharPedidosDeUsuario(usuarioId, setPedidos, alFallar);
+  }, [usuarioId, esAdmin]);
 
-      const [lista, datos] = await Promise.all([
-        obtenerPedidosDeUsuario(usuarioId),
-        obtenerUsuario(usuarioId)
-      ]);
-      setPedidos([...lista].reverse());
-      setPuntosUsuario(datos.puntos);
-    } catch (err) {
-      console.error("Error al cargar pedidos:", err);
-    }
-  }, [usuarioId, rol]);
-
-  // Se consulta cada 10 segundos para ver pedidos hechos desde la app movil
-  useEffect(() => {
-    if (!usuarioId) {
-      setPedidos([]);
-      return;
-    }
-
-    recargarPedidos();
-    const intervalo = setInterval(recargarPedidos, INTERVALO_ACTUALIZACION);
-    return () => clearInterval(intervalo);
-  }, [usuarioId, recargarPedidos]);
-
-  const cerrarSesion = () => {
-    localStorage.removeItem("usuario");
-    setUsuario(null);
+  const cerrarSesion = async () => {
     setCarrito([]);
-    setPedidos([]);
-    setPuntosUsuario(0);
+    await salir();
   };
 
   // --- CARRITO ---
@@ -109,8 +62,8 @@ export const AppProvider = ({ children }) => {
             : item
         );
       }
+      // Mismo formato de item que usa la app móvil
       return [...prev, {
-        productoId: producto.id,
         id: producto.id,
         nombre: producto.nombre,
         tamano: tamano,
@@ -139,64 +92,58 @@ export const AppProvider = ({ children }) => {
   };
 
   // --- PEDIDOS ---
+  // Los puntos y la lista de pedidos se actualizan solos por los listeners,
+  // así que aquí solo se guarda el pedido y se vacía el carrito.
   const finalizarPedido = async () => {
     if (carrito.length === 0 || !usuario) return false;
 
-    const nuevoPedidoData = {
-      usuarioId: usuario.id,
-      items: [...carrito],
-      total: Number(calcularTotalCarrito())
-    };
-
     try {
-      const respuesta = await apiCrearPedido(nuevoPedidoData);
-      setPedidos(prev => [respuesta.pedido, ...prev]);
-      setPuntosUsuario(respuesta.puntosTotales);
+      await crearPedido({
+        usuarioId: usuario.id,
+        items: [...carrito],
+        total: Number(calcularTotalCarrito())
+      });
       setCarrito([]);
-
-      // Mantener los puntos sincronizados en la sesion guardada
-      const actualizado = { ...usuario, puntos: respuesta.puntosTotales };
-      setUsuario(actualizado);
-      localStorage.setItem("usuario", JSON.stringify(actualizado));
       return true;
     } catch (error) {
-      console.error("Error al crear el pedido en la API:", error);
+      console.error("Error al crear el pedido:", mensajeError(error));
       return false;
     }
   };
 
   const cambiarEstadoPedido = async (idPedido, nuevoEstado) => {
     try {
-      await apiCambiarEstado(idPedido, nuevoEstado);
-      setPedidos(prev => prev.map(p => p.id === idPedido ? { ...p, estado: nuevoEstado } : p));
+      await guardarEstadoPedido(idPedido, nuevoEstado);
     } catch (error) {
-      console.error("Error al cambiar estado:", error);
+      console.error("Error al cambiar estado:", mensajeError(error));
     }
   };
 
   // --- PRODUCTOS (CRUD ADMIN) ---
-  const crearProductoAdmin = async (producto) => {
-    const nuevo = await apiCrearProducto(producto);
-    setProductos(prev => [...prev, nuevo]);
-    return nuevo;
+  // Los errores se traducen para que el formulario muestre un mensaje claro
+  const conMensaje = async (accion) => {
+    try {
+      return await accion();
+    } catch (error) {
+      throw new Error(mensajeError(error));
+    }
   };
 
-  const actualizarProductoAdmin = async (id, cambios) => {
-    const actualizado = await apiActualizarProducto(id, cambios);
-    setProductos(prev => prev.map(p => (p.id === id ? actualizado : p)));
-    return actualizado;
-  };
+  const crearProductoAdmin = (producto) => conMensaje(() => {
+    // La app móvil ordena el menú por "orden": el producto nuevo va al final
+    const siguienteOrden = productos.reduce((max, p) => Math.max(max, p.orden ?? 0), 0) + 1;
+    return crearProducto({ ...producto, orden: siguienteOrden });
+  });
 
-  const eliminarProductoAdmin = async (id) => {
-    await apiEliminarProducto(id);
-    setProductos(prev => prev.filter(p => p.id !== id));
-  };
+  const actualizarProductoAdmin = (id, cambios) => conMensaje(() => actualizarProducto(id, cambios));
+
+  const eliminarProductoAdmin = (id) => conMensaje(() => eliminarProducto(id));
 
   return (
     <AppContext.Provider value={{
       usuario,
       cargandoSesion,
-      esAdmin: usuario?.rol === "admin",
+      esAdmin,
       cerrarSesion,
       productos,
       carrito,
@@ -204,15 +151,14 @@ export const AppProvider = ({ children }) => {
       actualizarCantidad,
       eliminarDelCarrito,
       calcularTotalCarrito,
-      recargarProductos,
       crearProductoAdmin,
       actualizarProductoAdmin,
       eliminarProductoAdmin,
-      pedidos,
-      recargarPedidos,
+      // Sin sesión no se muestran pedidos de una sesión anterior
+      pedidos: usuarioId ? pedidos : [],
       finalizarPedido,
       cambiarEstadoPedido,
-      puntosUsuario
+      puntosUsuario: usuario?.puntos ?? 0
     }}>
       {children}
     </AppContext.Provider>
