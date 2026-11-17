@@ -15,7 +15,7 @@ export function calcularPuntos(total) {
     return Math.floor(total);
 }
 
-export async function crearPedido({ usuarioId, items, total, metodoPago = "efectivo" }) {
+export async function crearPedido({ usuarioId, items, total, metodoPago = "efectivo", referenciaPago = null }) {
     const referenciaUsuario = doc(db, "usuarios", usuarioId);
     const referenciaPedido = doc(collection(db, "pedidos"));
     const puntosGanados = calcularPuntos(total);
@@ -27,7 +27,8 @@ export async function crearPedido({ usuarioId, items, total, metodoPago = "efect
         estado: "pendiente",
         fecha: new Date().toISOString(),
         metodoPago,
-        referenciaPago: null,
+        // Con tarjeta solo se guardan los últimos 4 dígitos, nunca el número completo
+        referenciaPago,
     };
 
     // El pedido y la suma de puntos se guardan juntos: se aplican los dos o ninguno

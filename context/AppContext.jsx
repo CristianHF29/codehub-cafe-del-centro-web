@@ -92,22 +92,25 @@ export const AppProvider = ({ children }) => {
   };
 
   // --- PEDIDOS ---
-  // Los puntos y la lista de pedidos se actualizan solos por los listeners,
-  // así que aquí solo se guarda el pedido y se vacía el carrito.
-  const finalizarPedido = async () => {
-    if (carrito.length === 0 || !usuario) return false;
+  // Los puntos y la lista de pedidos se actualizan solos por los listeners.
+  // Devuelve el pedido creado y los puntos ganados, para la pantalla de confirmación.
+  const finalizarPedido = async ({ metodoPago = "efectivo", referenciaPago = null } = {}) => {
+    if (carrito.length === 0 || !usuario) {
+      throw new Error("El carrito está vacío");
+    }
 
     try {
-      await crearPedido({
+      const respuesta = await crearPedido({
         usuarioId: usuario.id,
         items: [...carrito],
-        total: Number(calcularTotalCarrito())
+        total: Number(calcularTotalCarrito()),
+        metodoPago,
+        referenciaPago
       });
       setCarrito([]);
-      return true;
+      return respuesta;
     } catch (error) {
-      console.error("Error al crear el pedido:", mensajeError(error));
-      return false;
+      throw new Error(mensajeError(error));
     }
   };
 
