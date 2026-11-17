@@ -13,6 +13,7 @@ import {
   escucharPedidosDeUsuario,
   escucharTodosLosPedidos
 } from "@/services/pedidosService";
+import { escucharClientes } from "@/services/usuariosService";
 import { mensajeError } from "@/services/errores";
 
 const AppContext = createContext();
@@ -22,6 +23,7 @@ export const AppProvider = ({ children }) => {
   const [productos, setProductos] = useState([]);
   const [carrito, setCarrito] = useState([]);
   const [pedidos, setPedidos] = useState([]);
+  const [clientes, setClientes] = useState({});
 
   // Catálogo en tiempo real desde Firestore
   useEffect(() => {
@@ -43,6 +45,15 @@ export const AppProvider = ({ children }) => {
       ? escucharTodosLosPedidos(setPedidos, alFallar)
       : escucharPedidosDeUsuario(usuarioId, setPedidos, alFallar);
   }, [usuarioId, esAdmin]);
+
+  // El admin necesita los nombres de los clientes para la tabla de pedidos
+  useEffect(() => {
+    if (!esAdmin) return;
+    return escucharClientes(
+      setClientes,
+      (err) => console.error("Error al cargar clientes:", err)
+    );
+  }, [esAdmin]);
 
   const cerrarSesion = async () => {
     setCarrito([]);
@@ -159,6 +170,7 @@ export const AppProvider = ({ children }) => {
       eliminarProductoAdmin,
       // Sin sesión no se muestran pedidos de una sesión anterior
       pedidos: usuarioId ? pedidos : [],
+      clientes: esAdmin ? clientes : {},
       finalizarPedido,
       cambiarEstadoPedido,
       puntosUsuario: usuario?.puntos ?? 0

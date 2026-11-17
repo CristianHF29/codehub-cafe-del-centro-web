@@ -33,7 +33,10 @@ function hora(fecha) {
 }
 
 export default function AdminPedidos() {
-  const { pedidos, cambiarEstadoPedido } = useApp();
+  const { pedidos, cambiarEstadoPedido, clientes } = useApp();
+
+  // Nombre y correo del cliente; si el perfil no carga, se muestra un código corto
+  const cliente = (uid) => clientes[uid] ?? { nombre: `Cliente ${String(uid).slice(0, 6)}`, email: "" };
 
   if (pedidos.length === 0) {
     return (
@@ -57,7 +60,8 @@ export default function AdminPedidos() {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <span className="font-bold text-gray-800">Pedido #{String(pedido.id).slice(0, 6).toUpperCase()}</span>
-                <span className="text-xs text-gray-500 block">Usuario ID: {pedido.usuarioId}</span>
+                <span className="text-xs text-gray-700 block">{cliente(pedido.usuarioId).nombre}</span>
+                <span className="text-xs text-gray-500 block truncate">{cliente(pedido.usuarioId).email}</span>
               </div>
               <span className="text-lg font-extrabold text-amber-900 shrink-0">
                 ${pedido.total.toFixed(2)}
@@ -106,7 +110,8 @@ export default function AdminPedidos() {
               <tr key={pedido.id} className="hover:bg-amber-50/40 transition-colors align-top">
                 <td className="py-5 px-5">
                   <span className="font-bold text-gray-900 text-lg block">#{String(pedido.id).slice(0, 6).toUpperCase()}</span>
-                  <span className="text-sm text-gray-500 block">Cliente {pedido.usuarioId}</span>
+                  <span className="text-sm text-gray-700 font-medium block">{cliente(pedido.usuarioId).nombre}</span>
+                  <span className="text-sm text-gray-500 block">{cliente(pedido.usuarioId).email}</span>
                   <span className="text-sm text-gray-400 block">{hora(pedido.fecha)}</span>
                 </td>
                 <td className="py-5 px-5 text-sm text-gray-700">
