@@ -1,110 +1,173 @@
-# Cafe del Centro - Aplicacion Web de Pedidos
+# Café del Centro · Aplicación web de pedidos
 
-Aplicacion web para Cafe del Centro, cafeteria de especialidad ubicada en el Centro Historico de San Salvador. El cliente arma su pedido eligiendo el tamano del vaso con calculo de precio en tiempo real y acumula puntos de fidelidad. El administrador gestiona el catalogo de productos, el estado de los pedidos y consulta un panel de reportes.
+Aplicación web de pedidos para **Café del Centro**, cafetería de especialidad ubicada en el Centro Histórico de San Salvador. El cliente arma su pedido eligiendo el tamaño del vaso con el precio calculado en tiempo real, paga en efectivo o con tarjeta y acumula puntos de fidelidad. El administrador gestiona el catálogo, cambia el estado de los pedidos y consulta un panel de reportes.
 
-Proyecto de la asignatura Diseno y Programacion de Software Multiplataforma (DPS941), Universidad Don Bosco, ciclo 02/2026. Etapa 2: modulo web con React y Next.js.
+La versión web comparte autenticación, base de datos y reglas de negocio con la **app móvil**: un pedido hecho desde el teléfono aparece al instante en el panel del administrador, y cuando este lo marca como listo, el cliente lo ve actualizado en su teléfono.
 
-## Equipo
+Proyecto de la asignatura **Diseño y Programación de Software Multiplataforma (DPS941)**, Universidad Don Bosco, ciclo 02-2026.
 
-| Integrante | Carnet | Modulo desarrollado |
-|---|---|---|
-| Rebeca Flores | fd253107 | Autenticacion, registro y rutas protegidas |
-| Cristian Hernandez | hf252375 | API REST, capa de servicios e integracion de modulos |
-| Henry Chacon | cg253400 | Catalogo de productos y gestion de imagenes |
-| Giovanni Quijano | qs242538 | Carrito de compras, pedidos y puntos de fidelidad |
-| Eduardo Amaya | am210570 | Landing page, dashboard de reportes y despliegue |
+## Enlaces
 
-## Demo
-
-Aplicacion desplegada: https://codehub-cafe-del-centro-web.vercel.app
+| | |
+|---|---|
+| Aplicación web desplegada | https://codehub-cafe-del-centro-web.vercel.app |
+| Repositorio de la app móvil | https://github.com/CristianHF29/codehub-cafe-del-centro-mobile |
+| Diseño en Figma (web y móvil) | https://www.figma.com/design/WcpCQgZSYKtXfmcroyKasO/vistas-mobil |
 
 ### Credenciales de prueba
 
-| Rol | Correo | Contrasena |
+| Rol | Correo | Contraseña |
 |---|---|---|
-| Administrador | admin@cafedelcentro.com | admin123 |
-| Cliente | cliente@correo.com | cliente123 |
+| Administrador | [CORREO ADMIN] | [CONTRASEÑA ADMIN] |
+| Cliente | Crear una cuenta desde `/registro` o entrar con Google | |
 
-Tambien se pueden crear cuentas nuevas desde /registro. Todo usuario registrado se crea con rol cliente.
+Toda cuenta nueva se crea con rol de cliente. El rol de administrador solo se asigna desde la consola de Firebase.
 
-## Tecnologias
+## Mockups de Figma
 
-- Next.js 16 con App Router
-- React 19
-- Tailwind CSS 4
-- Context API para el estado global
-- Route Handlers de Next.js para la API REST
-- Vercel Blob para el almacenamiento de imagenes
-- Despliegue continuo en Vercel
+### Versión web (escritorio)
 
-## Arquitectura
+| Inicio | Menú |
+|---|---|
+| ![Inicio web](docs/mockups/home-web.png) | ![Menú web](docs/mockups/menu-web.png) |
 
-El proyecto separa la interfaz, la logica de negocio y el acceso a datos en tres capas.
-
-Componentes y paginas (app/, components/): solo presentacion e interaccion. Ningun componente hace peticiones HTTP directamente.
-
-Estado global (context/AppContext.jsx): sesion del usuario, carrito, pedidos, puntos y catalogo. Expone las acciones que consumen los componentes.
-
-Capa de servicios (services/): unica responsable de comunicarse con la API. El archivo api.js centraliza el manejo de peticiones y errores, y los demas archivos exponen funciones por recurso.
-
-API REST (app/api/): Route Handlers con validacion de entrada y respuestas con codigos HTTP apropiados.
-
-Esta separacion permite sustituir la fuente de datos sin modificar los componentes, lo que facilita la migracion a Firebase prevista para la siguiente etapa.
-
-## Endpoints
-
-| Metodo | Ruta | Descripcion |
+| Nosotros | Galería | Contacto |
 |---|---|---|
-| GET | /api/productos | Lista el catalogo completo |
-| POST | /api/productos | Crea un producto |
-| GET | /api/productos/[id] | Obtiene un producto |
-| PUT | /api/productos/[id] | Actualiza un producto |
-| DELETE | /api/productos/[id] | Elimina un producto |
-| GET | /api/pedidos | Lista los pedidos, admite ?usuarioId= |
-| POST | /api/pedidos | Crea un pedido y acredita los puntos |
-| GET | /api/pedidos/[id] | Obtiene un pedido |
-| PUT | /api/pedidos/[id] | Cambia el estado del pedido |
-| POST | /api/auth/login | Valida credenciales y devuelve el usuario con su rol |
-| POST | /api/auth/registro | Crea una cuenta de cliente |
-| GET | /api/usuarios/[id] | Devuelve los datos y puntos del usuario |
-| POST | /api/upload | Sube una imagen y devuelve su URL publica |
+| ![Nosotros web](docs/mockups/nosotros-web.png) | ![Galería web](docs/mockups/galeria-web.png) | ![Contacto web](docs/mockups/contacto-web.png) |
+
+### Versión móvil
+
+| Inicio | Menú | Nosotros | Galería | Contacto |
+|---|---|---|---|---|
+| ![Inicio móvil](docs/mockups/home-mobile.png) | ![Menú móvil](docs/mockups/menu-mobile.png) | ![Nosotros móvil](docs/mockups/nosotros-mobile.png) | ![Galería móvil](docs/mockups/galeria-mobile.png) | ![Contacto móvil](docs/mockups/contacto-mobile.png) |
 
 ## Funcionalidades
 
-Cliente: registro e inicio de sesion, menu con imagenes, seleccion de tamano de vaso (16, 20, 24 y 32 oz) con precio dinamico, carrito con control de cantidades, confirmacion de pedido, acumulacion de un punto por dolar gastado e historial de pedidos con su estado.
+### Cliente
 
-Administrador: gestion del catalogo con creacion, edicion, eliminacion y carga de imagenes. Control del flujo de pedidos entre los estados pendiente, listo y entregado. Panel de reportes con ventas totales, ticket promedio, ranking de productos mas vendidos, distribucion por estado y actividad de los ultimos siete dias.
+- Registro e inicio de sesión con correo o con cuenta de Google.
+- Menú con fotos y selección de tamaño de vaso (16, 20, 24 y 32 oz) con precio dinámico.
+- Carrito con control de cantidades.
+- Pago en efectivo o con tarjeta. El pago con tarjeta es una simulación: valida el número con el algoritmo de Luhn, la fecha y el CVV, pero no cobra nada y solo guarda los últimos 4 dígitos.
+- Confirmación animada del pedido con los puntos ganados.
+- Puntos de fidelidad: 1 punto por cada dólar completo.
+- Historial de pedidos con su estado actualizado en tiempo real.
 
-Control de acceso: las rutas /menu y /dashboard requieren sesion activa. El dashboard es exclusivo del rol administrador, y un cliente que intente acceder es redirigido al menu.
+### Administrador
 
-## Instalacion
+- Gestión del catálogo: crear, editar, ocultar y eliminar productos, con carga de imágenes.
+- Gestión de pedidos de la web y de la app móvil, con el nombre del cliente, el detalle, el método de pago y el cambio de estado (pendiente, listo, entregado).
+- Panel de reportes: ventas totales, ticket promedio, clientes con pedidos, ranking de productos más vendidos, pedidos por estado y actividad de los últimos siete días.
+
+### Control de acceso
+
+Las rutas `/menu` y `/dashboard` requieren sesión activa. El dashboard es exclusivo del administrador; un cliente que intente entrar es redirigido al menú.
+
+## Arquitectura multiplataforma
+
+La web y la app móvil usan **el mismo proyecto de Firebase**, por lo que comparten:
+
+- **Autenticación:** la misma cuenta, con correo o con Google, sirve en las dos plataformas.
+- **Datos:** las mismas colecciones de Cloud Firestore.
+- **Lógica de negocio:** el mismo formato de pedido, el mismo cálculo de puntos y el mismo flujo de estados.
+- **Seguridad:** las mismas reglas de Firestore, incluidas en [`firestore.rules`](firestore.rules).
+
+```
+              ┌──────────────────────────┐
+              │   Firebase Authentication│
+              │   (correo y Google)      │
+              └─────────────┬────────────┘
+                            │
+   ┌────────────────┐       │       ┌──────────────────┐
+   │  Web (Next.js) │◄──────┼──────►│ Móvil (React     │
+   │  cliente+admin │       │       │ Native, cliente) │
+   └───────┬────────┘       │       └────────┬─────────┘
+           │        ┌───────┴────────┐       │
+           └───────►│ Cloud Firestore│◄──────┘
+                    │ usuarios       │
+                    │ productos      │
+                    │ pedidos        │
+                    └────────────────┘
+```
+
+| Colección | Contenido |
+|---|---|
+| `usuarios` | Nombre, correo, rol (`cliente` o `admin`) y puntos |
+| `productos` | Nombre, descripción, categoría, imagen, precios por tamaño, disponibilidad y orden |
+| `pedidos` | Cliente, productos, total, estado, fecha y método de pago |
+
+Los cambios se escuchan en tiempo real con `onSnapshot`, así que no hace falta recargar la página. El pedido y la suma de puntos se guardan en una **transacción**: se aplican los dos o ninguno.
+
+### Capas del proyecto web
+
+- **Páginas y componentes** (`app/`, `components/`): solo presentación e interacción; no acceden a Firebase directamente.
+- **Estado global** (`context/`): `SesionContext` maneja la sesión y el perfil del usuario; `AppContext` maneja el catálogo, el carrito y los pedidos.
+- **Servicios** (`services/`): única capa que se comunica con Firebase, separada por recurso (autenticación, productos, pedidos y usuarios).
+
+### Seguridad
+
+- Las reglas de Firestore no están en modo de prueba: cada cliente solo puede leer sus propios pedidos y su perfil.
+- Nadie puede asignarse el rol de administrador ni modificar sus puntos más allá de sumar los de un pedido.
+- Solo el administrador puede editar el catálogo y cambiar el estado de los pedidos, y únicamente ese campo.
+- Las contraseñas las maneja Firebase Authentication; el proyecto nunca las guarda.
+- El token de Vercel Blob vive en variables de entorno y no se sube al repositorio.
+
+## Tecnologías
+
+- Next.js 16 con App Router y React 19
+- Tailwind CSS 4
+- Context API para el estado global
+- Firebase Authentication (correo y Google)
+- Cloud Firestore
+- Vercel Blob para las imágenes del catálogo
+- Despliegue continuo en Vercel
+
+## Instalación
 
 ```bash
 git clone https://github.com/CristianHF29/codehub-cafe-del-centro-web.git
 cd codehub-cafe-del-centro-web
 npm install
+```
+
+Para subir imágenes desde el panel de administración, creá un archivo `.env.local` en la raíz con el token de Vercel Blob:
+
+```
+BLOB_READ_WRITE_TOKEN=tu_token
+```
+
+Después arrancá el servidor:
+
+```bash
 npm run dev
 ```
 
-La aplicacion queda disponible en http://localhost:3000
+La aplicación queda disponible en http://localhost:3000
 
 ## Estructura del proyecto
 
 ```
 app/
-  api/               Endpoints REST
-  login/             Inicio de sesion
+  api/upload/        Subida de imágenes a Vercel Blob
+  login/             Inicio de sesión (correo y Google)
   registro/          Registro de clientes
-  menu/              Menu del cliente y panel de administracion
+  menu/              Menú del cliente y panel de administración
   dashboard/         Reportes del administrador
-  customer-home.tsx  Landing publica
-components/          Carrito, historial, gestion de pedidos y catalogo
-context/             Estado global de la aplicacion
-services/            Capa de acceso a la API
-data/                Fuente de datos en memoria
+  customer-home.tsx  Página de inicio pública
+components/          Carrito, pago, historial, pedidos y catálogo
+context/             Sesión y estado global
+services/            Conexión con Firebase por recurso
+utils/               Validación de tarjeta
+docs/mockups/        Mockups de Figma
+firestore.rules      Reglas de seguridad de Firestore
 ```
 
+## Equipo CodeHub (T-010)
 
-## Consideraciones
+| Integrante | Carnet | Aporte |
+|---|---|---|
+| Cristian Arturo Hernández Flores | hf252375 | API y capa de servicios (Etapa 2), app móvil (Etapa 3) e integración final con Firebase |
 
-Los datos de productos, pedidos y usuarios se almacenan en memoria dentro de data/, por lo que se restablecen con cada despliegue o reinicio del servidor. Las contrasenas se manejan en texto plano por tratarse de datos de prueba. La persistencia con Firebase Firestore y el cifrado de credenciales corresponden a la siguiente etapa del proyecto.
+## Licencia
+
+Este proyecto está bajo la licencia [Creative Commons Atribución-NoComercial 4.0 Internacional (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/deed.es). Ver el archivo [LICENSE](LICENSE).
