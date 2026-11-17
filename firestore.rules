@@ -1,0 +1,64 @@
+rules_version = '2';
+
+// Reglas de seguridad de Café del Centro.
+// Las comparten la versión web y la app móvil, porque usan el mismo proyecto de Firebase.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function haySesion() {
+      return request.auth != null;
+    }
+
+    function esDueno(uid) {
+      return haySesion() && request.auth.uid == uid;
+    }
+
+    // El rol se lee del perfil en Firestore; solo se cambia desde la consola de Firebase
+    function esAdmin() {
+      return haySesion()
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == "admin";
+    }
+
+    // Perfiles: cada quien ve el suyo y el admin ve todos
+    match /usuarios/{uid} {
+      allow read: if esDueno(uid) || esAdmin();
+
+      // Al registrarse nadie puede darse rol de admin ni puntos iniciales
+      allow create: if esDueno(uid)
+        && request.resource.data.rol == "cliente"
+        && request.resource.data.puntos == 0;
+
+      // El cliente solo puede sumar puntos (al hacer un pedido); nunca cambiar su rol
+      allow update: if esDueno(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["puntos"])
+        && request.resource.data.puntos >= resource.data.puntos;
+
+      allow delete: if false;
+    }
+
+    // Catálogo: lo ve cualquiera (también la página de inicio sin sesión); solo el admin lo edita
+    match /productos/{id} {
+      allow read: if true;
+      allow create, update, delete: if esAdmin();
+    }
+
+    // Pedidos: el cliente crea y ve los suyos; el admin ve todos y solo cambia el estado
+    match /pedidos/{id} {
+      allow read: if esAdmin() || (haySesion() && resource.data.usuarioId == request.auth.uid);
+
+      allow create: if haySesion()
+        && request.resource.data.usuarioId == request.auth.uid
+        && request.resource.data.estado == "pendiente"
+        && request.resource.data.total is number
+        && request.resource.data.total > 0
+        && request.resource.data.items is list
+        && request.resource.data.items.size() > 0;
+
+      allow update: if esAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["estado"])
+        && request.resource.data.estado in ["pendiente", "listo", "entregado"];
+
+      allow delete: if false;
+    }
+  }
+}
